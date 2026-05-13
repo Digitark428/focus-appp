@@ -1,6 +1,6 @@
 # Focus 🎯
 
-Application de planification quotidienne propulsée par DIGIT'ARK.
+  Application de planification quotidienne propulsée par DIGIT'ARK.
 
 ---
 
