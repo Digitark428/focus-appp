@@ -2,7 +2,8 @@ import { Award, ChevronLeft, CheckCircle2, Clock, TrendingUp } from "lucide-reac
 import { useFocus } from "../context/FocusContext";
 
 export default function StatsScreen() {
-  const { setShowStats, computeStats, dayTheme } = useFocus();
+  const { setShowStats, computeStats, dayTheme, user } = useFocus();
+  const firstName = user?.firstName || "";
   const { stats, topCategories, totalWeekTasks, totalWeekMinutes, avgCompletion, bestDay } = computeStats();
   const maxBar = Math.max(...stats.map((s) => s.totalMinutes), 1);
 
@@ -15,7 +16,7 @@ export default function StatsScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-8">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-28">
         <header className="flex items-center justify-between mb-8">
           <button
             onClick={() => setShowStats(false)}
@@ -23,7 +24,14 @@ export default function StatsScreen() {
           >
             <ChevronLeft size={18} />
           </button>
-          <h2 className="text-lg font-light">Statistiques</h2>
+          <div>
+            <h2 className="text-lg font-light">Statistiques</h2>
+            {firstName && avgCompletion >= 50 && (
+              <p className="text-[10px] mt-0.5" style={{ color: dayTheme.accent + "99" }}>
+                Belle progression, {firstName}
+              </p>
+            )}
+          </div>
           <div className="w-10" />
         </header>
 

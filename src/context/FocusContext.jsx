@@ -344,8 +344,8 @@ export function FocusProvider({ children }) {
 
   const handleBetaBypass = () => {
     setUser({
-      firstName: "Bêta",
-      lastName: "Testeur",
+      firstName: "Alex",
+      lastName: "Demo",
       birthDate: "1990-01-01",
       email: "beta@focus.app",
       city: "",

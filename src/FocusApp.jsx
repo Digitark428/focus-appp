@@ -8,6 +8,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import SignupScreen from "./screens/SignupScreen";
 import StatsScreen from "./screens/StatsScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
+import BottomNav from "./components/BottomNav";
 
 // Conditional router. Order matches the original priority:
 //   1. No user → Signup
@@ -37,6 +38,7 @@ export default function FocusApp() {
   return (
     <FocusProvider>
       <Router />
+      <BottomNav />
     </FocusProvider>
   );
 }

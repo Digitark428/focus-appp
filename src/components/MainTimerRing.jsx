@@ -8,7 +8,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export default function MainTimerRing() {
   const {
     isRunning, pausedAt, currentTask, nextTask, progress, remainingSec,
-    now, demoMode, dayCompletions, dayTheme, togglePlay, setFocusMode,
+    now, demoMode, dayCompletions, dayTheme, togglePlay, setFocusMode, user,
   } = useFocus();
 
   if (!isRunning && !pausedAt) return null;
@@ -28,6 +28,7 @@ export default function MainTimerRing() {
     : 0;
   const countdownOffset = CIRCUMFERENCE - (countdownProgress / 100) * CIRCUMFERENCE;
   const accent = currentTask ? currentTask.color : nextTask ? nextTask.color : dayTheme.accent;
+  const firstName = user?.firstName || "";
 
   // Particle field — 1 at 0%, ~250 at 100%.
   const eased = Math.pow(countdownProgress / 100, 1.8);
@@ -110,14 +111,16 @@ export default function MainTimerRing() {
           ) : demoMode ? (
             <>
               <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">Journée terminée</p>
-              <h2 className="text-2xl font-light text-white/60">Bravo 🎉</h2>
+              <h2 className="text-2xl font-light text-white/60">
+                {firstName ? `Bravo ${firstName} 🎉` : "Bravo 🎉"}
+              </h2>
             </>
           ) : nextTask ? (
             <>
               <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">
                 {Object.keys(dayCompletions).length > 0
-                  ? "Votre prochaine tâche commence dans"
-                  : "Votre journée commence dans"}
+                  ? "Ta prochaine tâche commence dans"
+                  : firstName ? `Prêt ${firstName} ?`  : "Ta journée commence dans"}
               </p>
               <div className="text-5xl font-extralight font-mono tabular-nums tracking-tight" style={{ color: accent }}>
                 {formatTime(countdownSec)}
@@ -130,8 +133,12 @@ export default function MainTimerRing() {
           ) : (
             <>
               <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">Journée terminée</p>
-              <h2 className="text-2xl font-light text-white/60">Bravo 🎉</h2>
-              <p className="text-[11px] text-white/40 mt-3 px-4">Toutes les tâches sont passées</p>
+              <h2 className="text-2xl font-light text-white/60">
+                {firstName ? `Belle journée, ${firstName} 🎉` : "Bravo 🎉"}
+              </h2>
+              <p className="text-[11px] text-white/40 mt-3 px-4">
+                {firstName ? `Toutes tes tâches sont passées.` : "Toutes les tâches sont passées"}
+              </p>
             </>
           )}
         </div>

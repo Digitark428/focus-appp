@@ -3,7 +3,7 @@ import { useFocus } from "../context/FocusContext";
 
 export default function StartDayButton() {
   const {
-    sortedTasks, dayTheme, isRunning, pausedAt, dayCompletions,
+    sortedTasks, dayTheme, isRunning, pausedAt, dayCompletions, user,
     startDay, setShowNoTasksWarning, setFocusMode, setShowResetConfirm,
   } = useFocus();
 
@@ -60,7 +60,9 @@ export default function StartDayButton() {
 
             <div className="text-left">
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 mb-0.5">
-                {sortedTasks.length > 0 ? "Tout est prêt" : "Aucune tâche"}
+                {sortedTasks.length > 0
+                  ? (user?.firstName ? `Prêt ${user.firstName} ?` : "Tout est prêt")
+                  : "Aucune tâche"}
               </p>
               <p className="text-base font-medium" style={{ color: dayTheme.accent }}>
                 Démarrer la journée

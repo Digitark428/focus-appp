@@ -1,14 +1,19 @@
 import { useFocus } from "../context/FocusContext";
 
 export default function GoalProgress() {
-  const { dailyGoal, weeklyGoal, dayTheme } = useFocus();
+  const { dailyGoal, weeklyGoal, dayTheme, user } = useFocus();
+  const firstName = user?.firstName || "";
   if (dailyGoal.percent === 0 && weeklyGoal.percent === 0) return null;
 
   return (
     <div className="space-y-4 mb-8">
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">Progression journée</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">
+            {dailyGoal.percent === 100 && firstName
+              ? `Journée accomplie, ${firstName} ✦`
+              : "Progression journée"}
+          </p>
           <p className="text-xs font-mono tabular-nums" style={{ color: dayTheme.accent }}>
             {dailyGoal.percent}<span className="text-white/30">%</span>
             <span className="text-white/30 ml-1.5">· {dailyGoal.done}/{dailyGoal.total}</span>

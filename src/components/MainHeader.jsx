@@ -4,6 +4,10 @@ import { useFocus } from "../context/FocusContext";
 export default function MainHeader() {
   const { user, now, dayTheme, setShowMenu, handleLogoTap } = useFocus();
 
+  const hour = now.getHours();
+  const greeting = hour < 5 ? "Bonne nuit" : hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const firstName = user?.firstName || "";
+
   return (
     <header className="flex items-start justify-between mb-8">
       <button onClick={handleLogoTap} className="text-left">
@@ -13,6 +17,11 @@ export default function MainHeader() {
         <p className="text-xs text-white/40 mt-2 tracking-widest uppercase">
           {now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
         </p>
+        {firstName && (
+          <p className="text-[11px] mt-1.5 font-light" style={{ color: dayTheme.accent + "bb" }}>
+            {greeting}, {firstName}
+          </p>
+        )}
       </button>
 
       <button

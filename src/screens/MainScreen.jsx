@@ -46,7 +46,7 @@ export default function MainScreen() {
       <SolarAmbianceLayer />
       <CurrentTaskTopBar />
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-8">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-28">
         <MainHeader />
         <TrialBanner />
         <BrainBanner />
