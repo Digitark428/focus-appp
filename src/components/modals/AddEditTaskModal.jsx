@@ -2,6 +2,9 @@ import { ChevronDown, Clock, Sparkles } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TASK_CATEGORIES } from "../../constants/tasks";
 import { toMin } from "../../utils/time";
+import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
+
+const FLOAT = "#E2B872";
 
 export default function AddEditTaskModal() {
   const {
@@ -17,29 +20,44 @@ export default function AddEditTaskModal() {
   const cat = taskForm.category ? TASK_CATEGORIES.find((c) => c.id === taskForm.category) : null;
   const CatIcon = cat?.icon;
 
+  const inputCls = "w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition";
+  const inputStyle = {
+    background: "rgba(255,255,255,0.04)",
+    border: `1px solid ${TEMPO.border}`,
+    color: TEMPO.text,
+  };
+
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: "rgba(7,19,38,0.7)" }}
       onClick={() => setShowAdd(false)}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-neutral-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+        className="rounded-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+        style={{
+          background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
+          border: `1px solid ${TEMPO.borderStrong}`,
+          boxShadow: TEMPO_SHADOWS.cardHi,
+        }}
       >
-        <h3 className="text-lg font-light mb-1">
+        <h3 className="text-lg font-light mb-1" style={{ color: TEMPO.text }}>
           {editingTask ? "Modifier la tâche" : "Nouvelle tâche"}
         </h3>
-        <p className="text-xs text-white/40 mb-4">{dayTheme.name}</p>
+        <p className="text-xs mb-4" style={{ color: TEMPO.textDim }}>{dayTheme.name}</p>
 
-        {/* Toggle Avec/Sans horaire */}
         {!editingTask && (
-          <div className="flex mb-5 rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]">
+          <div
+            className="flex mb-5 rounded-xl overflow-hidden"
+            style={{ border: `1px solid ${TEMPO.border}`, background: "rgba(255,255,255,0.025)" }}
+          >
             <button
               onClick={() => setIsFloatingForm(false)}
               className="flex-1 py-2.5 text-xs font-medium transition"
               style={!isFloatingForm
-                ? { background: dayTheme.accent + "25", color: dayTheme.accent, borderRight: `1px solid ${dayTheme.accent}30` }
-                : { color: "rgba(255,255,255,0.4)" }}
+                ? { background: TEMPO.gold + "25", color: TEMPO.gold, borderRight: `1px solid ${TEMPO.gold}30` }
+                : { color: TEMPO.textDim }}
             >
               Avec horaire
             </button>
@@ -47,15 +65,14 @@ export default function AddEditTaskModal() {
               onClick={() => setIsFloatingForm(true)}
               className="flex-1 py-2.5 text-xs font-medium transition"
               style={isFloatingForm
-                ? { background: "#FB923C25", color: "#FB923C" }
-                : { color: "rgba(255,255,255,0.4)" }}
+                ? { background: FLOAT + "25", color: FLOAT }
+                : { color: TEMPO.textDim }}
             >
               Sans horaire
             </button>
           </div>
         )}
 
-        {/* Hint */}
         {!editingTask && !isFloatingForm && sortedTasks.length > 0 && (() => {
           const lastTask = sortedTasks.reduce(
             (latest, t) => (toMin(t.end) > toMin(latest.end) ? t : latest),
@@ -64,15 +81,19 @@ export default function AddEditTaskModal() {
           return (
             <div
               className="mb-4 px-3.5 py-2.5 rounded-xl flex items-start gap-2.5 border"
-              style={{ background: dayTheme.accent + "10", borderColor: dayTheme.accent + "30" }}
+              style={{ background: TEMPO.gold + "10", borderColor: TEMPO.gold + "30" }}
             >
-              <Clock size={13} className="shrink-0 mt-0.5" style={{ color: dayTheme.accent }} />
+              <Clock size={13} className="shrink-0 mt-0.5" style={{ color: TEMPO.gold }} />
               <div className="text-[11px] leading-relaxed">
-                <p className="text-white/70">
+                <p style={{ color: TEMPO.text + "c0" }}>
                   Votre dernière tâche se termine à{" "}
-                  <span className="font-mono tabular-nums font-medium text-white">{lastTask.end}</span>
+                  <span className="font-mono tabular-nums font-medium" style={{ color: TEMPO.text }}>
+                    {lastTask.end}
+                  </span>
                 </p>
-                <p className="text-white/40 mt-0.5">L'heure de début est pré-remplie pour enchaîner</p>
+                <p className="mt-0.5" style={{ color: TEMPO.textDim }}>
+                  L'heure de début est pré-remplie pour enchaîner
+                </p>
               </div>
             </div>
           );
@@ -81,25 +102,24 @@ export default function AddEditTaskModal() {
         {isFloatingForm && (
           <div
             className="mb-4 px-3.5 py-2.5 rounded-xl flex items-start gap-2.5 border"
-            style={{ background: "rgba(251,146,60,0.1)", borderColor: "rgba(251,146,60,0.3)" }}
+            style={{ background: FLOAT + "10", borderColor: FLOAT + "30" }}
           >
             <span className="text-base shrink-0">🔖</span>
             <div className="text-[11px] leading-relaxed">
-              <p className="text-white/70">Cette tâche n'a pas d'horaire.</p>
-              <p className="text-white/40 mt-0.5">
+              <p style={{ color: TEMPO.text + "c0" }}>Cette tâche n'a pas d'horaire.</p>
+              <p className="mt-0.5" style={{ color: TEMPO.textDim }}>
                 Elle apparaîtra dans la section "À programmer" sans impacter votre planning.
               </p>
             </div>
           </div>
         )}
 
-        {/* Category picker entry */}
         <button
           onClick={() => { setShowCategoryPicker(true); setPickerStep("category"); }}
           className="w-full mb-4 p-3.5 rounded-xl border flex items-center gap-3 transition hover:bg-white/5"
           style={{
-            borderColor: cat ? cat.color + "60" : "rgba(167,139,250,0.4)",
-            background: cat ? cat.color + "10" : "rgba(167,139,250,0.08)",
+            borderColor: cat ? cat.color + "60" : TEMPO.gold + "40",
+            background: cat ? cat.color + "10" : TEMPO.gold + "08",
           }}
         >
           {cat ? (
@@ -108,63 +128,69 @@ export default function AddEditTaskModal() {
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium" style={{ color: cat.color }}>{cat.name}</p>
                 {taskForm.subcategory && (
-                  <p className="text-[11px] text-white/60">{taskForm.subcategory}</p>
+                  <p className="text-[11px]" style={{ color: TEMPO.textDim }}>{taskForm.subcategory}</p>
                 )}
               </div>
-              <span className="text-xs text-white/40">Changer</span>
+              <span className="text-xs" style={{ color: TEMPO.textDim }}>Changer</span>
             </>
           ) : (
             <>
-              <Sparkles size={18} className="text-violet-400" />
+              <Sparkles size={18} style={{ color: TEMPO.gold }} />
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-violet-300">Tâches prédéfinies</p>
-                <p className="text-[11px] text-white/50">Choisir parmi les catégories prédéfinies</p>
+                <p className="text-sm font-medium" style={{ color: TEMPO.gold }}>Tâches prédéfinies</p>
+                <p className="text-[11px]" style={{ color: TEMPO.textDim }}>
+                  Choisir parmi les catégories prédéfinies
+                </p>
               </div>
-              <ChevronDown size={14} className="text-white/40 -rotate-90" />
+              <ChevronDown size={14} className="-rotate-90" style={{ color: TEMPO.textDim }} />
             </>
           )}
         </button>
 
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-[10px] text-white/30 uppercase tracking-widest">ou</span>
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px" style={{ background: TEMPO.border }} />
+          <span className="text-[10px] uppercase tracking-widest" style={{ color: TEMPO.textMuted }}>ou</span>
+          <div className="flex-1 h-px" style={{ background: TEMPO.border }} />
         </div>
 
         <div className="space-y-3">
           <input
             type="text" placeholder="Nom de la tâche (libre)" value={taskForm.name}
             onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30"
+            className={inputCls} style={inputStyle}
           />
 
           {!isFloatingForm && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-white/40 mb-1 block">Début</label>
+                <label className="text-xs mb-1 block" style={{ color: TEMPO.textDim }}>Début</label>
                 <input
                   type="time" value={taskForm.start}
                   onChange={(e) => setTaskForm({ ...taskForm, start: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-white/30"
+                  className="w-full rounded-xl px-3 py-3 text-sm focus:outline-none transition"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="text-xs text-white/40 mb-1 block">Fin</label>
+                <label className="text-xs mb-1 block" style={{ color: TEMPO.textDim }}>Fin</label>
                 <input
                   type="time" value={taskForm.end}
                   onChange={(e) => setTaskForm({ ...taskForm, end: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-white/30"
+                  className="w-full rounded-xl px-3 py-3 text-sm focus:outline-none transition"
+                  style={inputStyle}
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="text-xs text-white/40 mb-1 block">Notes / sous-tâches</label>
+            <label className="text-xs mb-1 block" style={{ color: TEMPO.textDim }}>
+              Notes / sous-tâches
+            </label>
             <textarea
               placeholder="Ajoute des notes, sous-tâches, rappels..." value={taskForm.notes}
               onChange={(e) => setTaskForm({ ...taskForm, notes: e.target.value })} rows={4}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30 resize-none"
+              className={`${inputCls} resize-none`} style={inputStyle}
             />
           </div>
         </div>
@@ -172,13 +198,19 @@ export default function AddEditTaskModal() {
         <div className="flex gap-2 mt-6">
           <button
             onClick={() => setShowAdd(false)}
-            className="flex-1 py-3 rounded-xl border border-white/10 text-sm hover:bg-white/5 transition"
+            className="flex-1 py-3 rounded-xl text-sm transition hover:bg-white/5"
+            style={{ border: `1px solid ${TEMPO.border}`, color: TEMPO.text }}
           >
             Annuler
           </button>
           <button
             onClick={saveTask}
-            className="flex-1 py-3 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 transition"
+            className="flex-1 py-3 rounded-xl text-sm font-medium transition active:scale-[0.98]"
+            style={{
+              background: TEMPO_GRADIENTS.gold,
+              color: "#1A1206",
+              boxShadow: TEMPO_SHADOWS.gold,
+            }}
           >
             {editingTask ? "Enregistrer" : "Ajouter"}
           </button>

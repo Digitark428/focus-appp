@@ -2,6 +2,11 @@ import { CalendarPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
 import { toMin } from "../utils/time";
+import { TEMPO } from "../utils/tempoTheme";
+
+// Couleur d'accent secondaire pour les tâches flottantes (légèrement
+// distinguée du doré principal sans casser l'identité Tempo).
+const FLOAT = "#E2B872";
 
 export default function FloatingTasksSection() {
   const {
@@ -34,14 +39,17 @@ export default function FloatingTasksSection() {
     <div className="mt-8 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#FB923C" }} />
-          <h3 className="text-xs uppercase tracking-[0.2em] text-white/40">
+          <div
+            className="w-1.5 h-1.5 rounded-full animate-pulse"
+            style={{ background: FLOAT, boxShadow: `0 0 6px ${FLOAT}` }}
+          />
+          <h3 className="text-[10px] uppercase tracking-[0.22em]" style={{ color: TEMPO.textDim }}>
             À programmer · En attente
           </h3>
           {floatingTasks.length > 0 && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full font-mono"
-              style={{ background: "rgba(251,146,60,0.2)", color: "#FB923C" }}
+              style={{ background: FLOAT + "22", color: FLOAT }}
             >
               {floatingTasks.length}
             </span>
@@ -49,7 +57,8 @@ export default function FloatingTasksSection() {
         </div>
         <button
           onClick={() => openAddFloating()}
-          className="text-[11px] text-white/40 hover:text-orange-400 transition flex items-center gap-1"
+          className="text-[11px] transition flex items-center gap-1"
+          style={{ color: TEMPO.textDim }}
         >
           <Plus size={12} /> Ajouter
         </button>
@@ -58,13 +67,14 @@ export default function FloatingTasksSection() {
       {floatingTasks.length === 0 ? (
         <div
           className="rounded-2xl border border-dashed p-6 text-center"
-          style={{ borderColor: "rgba(251,146,60,0.25)", background: "rgba(251,146,60,0.03)" }}
+          style={{ borderColor: FLOAT + "25", background: FLOAT + "06" }}
         >
-          <p className="text-xs text-white/40 leading-relaxed">
+          <p className="text-xs leading-relaxed" style={{ color: TEMPO.textDim }}>
             Aucune tâche en attente.<br />
             <button
               onClick={() => openAddFloating()}
-              className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2 transition mt-1"
+              className="underline underline-offset-2 transition mt-1"
+              style={{ color: FLOAT }}
             >
               Ajouter une tâche sans horaire
             </button>
@@ -80,38 +90,46 @@ export default function FloatingTasksSection() {
                 key={task.id}
                 className="relative overflow-hidden rounded-2xl border flex items-center gap-3 px-4 py-3.5 group"
                 style={{
-                  background: "linear-gradient(135deg, rgba(251,146,60,0.10) 0%, rgba(251,146,60,0.04) 100%)",
-                  borderColor: "rgba(251,146,60,0.30)",
+                  background: `linear-gradient(135deg, ${FLOAT}10 0%, ${FLOAT}04 100%)`,
+                  borderColor: FLOAT + "30",
                 }}
               >
                 <div
                   className="absolute left-0 inset-y-0 w-0.5 rounded-r-full"
-                  style={{ background: "linear-gradient(180deg, #FB923C, #F97316, #EA580C)" }}
+                  style={{ background: `linear-gradient(180deg, ${FLOAT}, ${TEMPO.gold}, ${TEMPO.goldDeep})` }}
                 />
 
                 <div
                   className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center"
-                  style={{ background: "rgba(251,146,60,0.15)", border: "1px solid rgba(251,146,60,0.3)" }}
+                  style={{ background: FLOAT + "18", border: `1px solid ${FLOAT}30` }}
                 >
-                  {CatIcon ? <CatIcon size={14} style={{ color: "#FB923C" }} /> : <span className="text-base">🔖</span>}
+                  {CatIcon
+                    ? <CatIcon size={14} style={{ color: FLOAT }} />
+                    : <span className="text-base">🔖</span>}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white/90 truncate">{task.name}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: TEMPO.text }}>
+                    {task.name}
+                  </p>
                   {task.subcategory && (
-                    <p className="text-[11px] text-white/40 truncate">{task.subcategory}</p>
+                    <p className="text-[11px] truncate" style={{ color: TEMPO.textDim }}>
+                      {task.subcategory}
+                    </p>
                   )}
                   {task.notes && (
-                    <p className="text-[11px] text-white/30 truncate mt-0.5 italic">{task.notes}</p>
+                    <p className="text-[11px] truncate mt-0.5 italic" style={{ color: TEMPO.textMuted }}>
+                      {task.notes}
+                    </p>
                   )}
                 </div>
 
                 <span
                   className="text-[10px] px-2 py-0.5 rounded-full shrink-0"
                   style={{
-                    background: "rgba(251,146,60,0.15)",
-                    color: "#FB923C",
-                    border: "1px solid rgba(251,146,60,0.3)",
+                    background: FLOAT + "18",
+                    color: FLOAT,
+                    border: `1px solid ${FLOAT}30`,
                   }}
                 >
                   En attente
@@ -121,21 +139,23 @@ export default function FloatingTasksSection() {
                   <button
                     onClick={() => scheduleFloating(task)}
                     className="w-8 h-8 rounded-full flex items-center justify-center transition hover:scale-110"
-                    style={{ background: "rgba(251,146,60,0.2)", color: "#FB923C" }}
+                    style={{ background: FLOAT + "22", color: FLOAT }}
                     title="Planifier cette tâche"
                   >
                     <CalendarPlus size={13} />
                   </button>
                   <button
                     onClick={() => openEdit(task, true)}
-                    className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center transition text-white/30 hover:text-white/60"
+                    className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center transition"
+                    style={{ color: TEMPO.textDim }}
                     title="Modifier"
                   >
                     <Pencil size={12} />
                   </button>
                   <button
                     onClick={() => setFloatingTasks(floatingTasks.filter((t) => t.id !== task.id))}
-                    className="w-8 h-8 rounded-full hover:bg-red-500/10 flex items-center justify-center transition text-white/30 hover:text-red-400"
+                    className="w-8 h-8 rounded-full hover:bg-red-500/10 flex items-center justify-center transition hover:text-red-400"
+                    style={{ color: TEMPO.textDim }}
                     title="Supprimer"
                   >
                     <Trash2 size={12} />

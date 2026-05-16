@@ -2,9 +2,8 @@ import { Check, ChevronRight } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TASK_CATEGORIES } from "../../constants/tasks";
 import { BRAIN_CYCLE_DAYS } from "../../constants/brain";
+import { TEMPO } from "../../utils/tempoTheme";
 
-// === VALIDATION BURST ===
-// Halo + 16 confetti particles + checkmark when a task is marked done.
 export function ValidationBurst() {
   const { validationBurst } = useFocus();
   if (!validationBurst) return null;
@@ -45,13 +44,12 @@ export function ValidationBurst() {
           animation: "check-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <Check size={28} strokeWidth={3} className="text-black" />
+        <Check size={28} strokeWidth={3} style={{ color: "#1A1206" }} />
       </div>
     </div>
   );
 }
 
-// === TASK TRANSITION OVERLAY (5s between two tasks) ===
 export function TaskTransition() {
   const { taskTransition, setTaskTransition } = useFocus();
   if (!taskTransition) return null;
@@ -61,7 +59,7 @@ export function TaskTransition() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(circle at center, rgba(15,15,20,0.6) 0%, rgba(0,0,0,0.85) 80%)",
+          background: "radial-gradient(circle at center, rgba(7,19,38,0.6) 0%, rgba(7,19,38,0.92) 80%)",
           animation: "burst-fade 5s ease-out forwards",
         }}
       />
@@ -85,11 +83,16 @@ export function TaskTransition() {
               boxShadow: `0 0 40px ${taskTransition.fromColor}, 0 0 80px ${taskTransition.fromColor}60`,
             }}
           >
-            <Check size={32} strokeWidth={3} className="text-black" />
+            <Check size={32} strokeWidth={3} style={{ color: "#1A1206" }} />
           </div>
         </div>
 
-        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-1">Tâche terminée</p>
+        <p
+          className="text-[10px] uppercase tracking-[0.3em] mb-1"
+          style={{ color: TEMPO.textDim }}
+        >
+          Tâche terminée
+        </p>
         <p className="text-xl font-light mb-8" style={{ color: taskTransition.fromColor }}>
           {taskTransition.fromName}
         </p>
@@ -106,15 +109,23 @@ export function TaskTransition() {
           />
         </div>
 
-        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-1">Prochaine tâche</p>
+        <p
+          className="text-[10px] uppercase tracking-[0.3em] mb-1"
+          style={{ color: TEMPO.textDim }}
+        >
+          Prochaine tâche
+        </p>
         <p className="text-2xl font-light mb-1" style={{ color: taskTransition.toColor }}>
           {taskTransition.toName}
         </p>
-        <p className="text-xs text-white/40 font-mono tabular-nums">{taskTransition.toStart}</p>
+        <p className="text-xs font-mono tabular-nums" style={{ color: TEMPO.textDim }}>
+          {taskTransition.toStart}
+        </p>
 
         <button
           onClick={() => setTaskTransition(null)}
-          className="mt-8 text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition"
+          className="mt-8 text-[10px] uppercase tracking-[0.2em] transition hover:text-white/80"
+          style={{ color: TEMPO.textMuted }}
         >
           Passer
         </button>
@@ -123,7 +134,6 @@ export function TaskTransition() {
   );
 }
 
-// === DRAG GHOST OVERLAY ===
 export function DragGhost() {
   const { dragState, tasks } = useFocus();
   if (!dragState) return null;
@@ -144,7 +154,7 @@ export function DragGhost() {
       <div
         className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border backdrop-blur-md shadow-2xl"
         style={{
-          background: "linear-gradient(135deg, rgba(15,15,20,0.95) 0%, rgba(20,20,28,0.95) 100%)",
+          background: "linear-gradient(135deg, rgba(15,35,66,0.95) 0%, rgba(11,29,58,0.95) 100%)",
           borderColor: draggingTask.color + "70",
           boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 20px ${draggingTask.color}40`,
         }}
@@ -158,15 +168,22 @@ export function DragGhost() {
             : <div className="w-1 h-4 rounded-full" style={{ background: draggingTask.color }} />}
         </div>
         <div>
-          <p className="text-xs font-medium text-white leading-tight">{draggingTask.name}</p>
+          <p className="text-xs font-medium leading-tight" style={{ color: TEMPO.text }}>
+            {draggingTask.name}
+          </p>
           <p className="text-[10px] font-mono tabular-nums" style={{ color: draggingTask.color }}>
             {draggingTask.start} – {draggingTask.end}
           </p>
         </div>
         {targetTask && (
-          <div className="flex items-center gap-1.5 ml-1 pl-2.5 border-l border-white/10">
-            <ChevronRight size={10} className="text-white/40" />
-            <p className="text-[10px] text-white/60 max-w-[80px] truncate">{targetTask.name}</p>
+          <div
+            className="flex items-center gap-1.5 ml-1 pl-2.5 border-l"
+            style={{ borderColor: TEMPO.border }}
+          >
+            <ChevronRight size={10} style={{ color: TEMPO.textDim }} />
+            <p className="text-[10px] max-w-[80px] truncate" style={{ color: TEMPO.textDim }}>
+              {targetTask.name}
+            </p>
           </div>
         )}
       </div>
@@ -174,7 +191,6 @@ export function DragGhost() {
   );
 }
 
-// === SWAP TOAST ===
 export function SwapToast() {
   const { swapToast } = useFocus();
   if (!swapToast) return null;
@@ -184,27 +200,29 @@ export function SwapToast() {
       <div
         className="flex items-center gap-2.5 px-4 py-3 rounded-2xl border backdrop-blur-md"
         style={{
-          background: "rgba(15,15,20,0.95)",
-          borderColor: "rgba(255,255,255,0.15)",
+          background: "rgba(11,29,58,0.95)",
+          borderColor: TEMPO.borderStrong,
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
           animation: "check-pop 0.4s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
-        <div className="w-5 h-5 rounded-full bg-green-400/20 flex items-center justify-center shrink-0">
-          <Check size={11} className="text-green-400" strokeWidth={3} />
+        <div
+          className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: TEMPO.success + "25" }}
+        >
+          <Check size={11} style={{ color: TEMPO.success }} strokeWidth={3} />
         </div>
-        <p className="text-xs text-white/80 whitespace-nowrap">
-          <span className="font-medium text-white">{swapToast.nameA}</span>
-          <span className="text-white/40 mx-1.5">↔</span>
-          <span className="font-medium text-white">{swapToast.nameB}</span>
-          <span className="text-white/50 ml-1.5">échangées</span>
+        <p className="text-xs whitespace-nowrap" style={{ color: TEMPO.text + "c0" }}>
+          <span className="font-medium" style={{ color: TEMPO.text }}>{swapToast.nameA}</span>
+          <span className="mx-1.5" style={{ color: TEMPO.textDim }}>↔</span>
+          <span className="font-medium" style={{ color: TEMPO.text }}>{swapToast.nameB}</span>
+          <span className="ml-1.5" style={{ color: TEMPO.textDim }}>échangées</span>
         </p>
       </div>
     </div>
   );
 }
 
-// === BRAIN NEW NODE BURST ===
 export function BrainNewNodeBurst() {
   const {
     brainNewNodeBurst, setBrainNewNodeBurst, setShowBrain,
@@ -218,9 +236,9 @@ export function BrainNewNodeBurst() {
         onClick={() => { setBrainNewNodeBurst(null); setShowBrain(true); }}
         className="pointer-events-auto rounded-2xl border px-5 py-4 backdrop-blur-md flex items-center gap-3"
         style={{
-          background: `linear-gradient(135deg, ${brainCurrentColor}25 0%, rgba(15,15,20,0.95) 100%)`,
+          background: `linear-gradient(135deg, ${brainCurrentColor}25 0%, rgba(11,29,58,0.95) 100%)`,
           borderColor: brainCurrentColor + "60",
-          boxShadow: `0 20px 60px ${brainCurrentColor}50, 0 0 40px ${brainCurrentColor}30`,
+          boxShadow: `0 20px 60px ${brainCurrentColor}40, 0 0 40px ${brainCurrentColor}30`,
           animation: "burst-fade 2.4s ease-out forwards",
         }}
       >
@@ -235,11 +253,11 @@ export function BrainNewNodeBurst() {
           <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: brainCurrentColor }}>
             Nouvelle connexion
           </p>
-          <p className="text-sm font-medium text-white">
+          <p className="text-sm font-medium" style={{ color: TEMPO.text }}>
             Jour {brainDayInCycle}/{BRAIN_CYCLE_DAYS} · Cycle {brainCurrentCycleIdx + 1}
           </p>
         </div>
-        <ChevronRight size={14} className="text-white/40 shrink-0" />
+        <ChevronRight size={14} className="shrink-0" style={{ color: TEMPO.textDim }} />
       </button>
     </div>
   );

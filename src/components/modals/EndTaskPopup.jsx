@@ -1,6 +1,7 @@
 import { Check, CheckCircle2, ChevronDown, Clock, Plus } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { toMin } from "../../utils/time";
+import { TEMPO, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
 export default function EndTaskPopup() {
   const {
@@ -15,8 +16,8 @@ export default function EndTaskPopup() {
   if (!endTaskPopup) return null;
 
   const isInProgress = currentTask?.id === endTaskPopup.id;
+  const accent = endTaskPopup.color;
 
-  // Minutes saved when finishing the current task early.
   let minutesSaved = 0;
   if (isInProgress) {
     const taskEnd = toMin(endTaskPopup.end);
@@ -33,12 +34,16 @@ export default function EndTaskPopup() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-end sm:items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
+      style={{ background: "rgba(7,19,38,0.82)" }}
+    >
       <div
-        className="bg-neutral-900 border rounded-3xl p-6 w-full max-w-sm"
+        className="rounded-3xl p-6 w-full max-w-sm"
         style={{
-          borderColor: endTaskPopup.color + "60",
-          boxShadow: `0 20px 60px ${endTaskPopup.color}30`,
+          background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
+          border: `1px solid ${accent}60`,
+          boxShadow: `0 20px 60px ${accent}30, ${TEMPO_SHADOWS.cardHi}`,
         }}
       >
         {!showExtendChoice ? (
@@ -47,21 +52,26 @@ export default function EndTaskPopup() {
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
                 style={{
-                  background: endTaskPopup.color + "20",
-                  boxShadow: `0 0 30px ${endTaskPopup.color}40`,
+                  background: accent + "20",
+                  boxShadow: `0 0 30px ${accent}40`,
                 }}
               >
-                <CheckCircle2 size={28} style={{ color: endTaskPopup.color }} />
+                <CheckCircle2 size={28} style={{ color: accent }} />
               </div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">
+              <p
+                className="text-[10px] uppercase tracking-[0.22em] mb-2"
+                style={{ color: TEMPO.textDim }}
+              >
                 {isInProgress ? "Tâche en cours" : "Tâche terminée"}
               </p>
-              <h3 className="text-2xl font-light mb-2">{endTaskPopup.name}</h3>
-              <p className="text-sm text-white/60">
+              <h3 className="text-2xl font-light mb-2" style={{ color: TEMPO.text }}>
+                {endTaskPopup.name}
+              </h3>
+              <p className="text-sm" style={{ color: TEMPO.textDim }}>
                 {isInProgress ? "Avez-vous déjà fini votre objectif ?" : "Avez-vous rempli votre objectif ?"}
               </p>
               {!isInProgress && (
-                <p className="text-[11px] text-white/30 italic mt-3 px-2">
+                <p className="text-[11px] italic mt-3 px-2" style={{ color: TEMPO.textMuted }}>
                   Prenez votre temps · vos prochaines tâches sont en pause
                 </p>
               )}
@@ -72,7 +82,7 @@ export default function EndTaskPopup() {
                 <button
                   onClick={() => finishEarly(endTaskPopup)}
                   className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 transition hover:scale-[1.02]"
-                  style={{ background: endTaskPopup.color, color: "#000" }}
+                  style={{ background: accent, color: "#1A1206" }}
                 >
                   <Check size={16} strokeWidth={2.5} />
                   <span className="text-sm font-medium">
@@ -85,7 +95,7 @@ export default function EndTaskPopup() {
                 <button
                   onClick={() => markTaskDone(endTaskPopup.id)}
                   className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 transition hover:scale-[1.02]"
-                  style={{ background: endTaskPopup.color, color: "#000" }}
+                  style={{ background: accent, color: "#1A1206" }}
                 >
                   <Check size={16} strokeWidth={2.5} />
                   <span className="text-sm font-medium">Oui, c'est fait</span>
@@ -94,7 +104,8 @@ export default function EndTaskPopup() {
 
               <button
                 onClick={() => setShowExtendChoice(true)}
-                className="w-full py-3.5 rounded-xl border border-white/15 text-sm text-white/80 hover:bg-white/5 transition flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl border text-sm transition flex items-center justify-center gap-2 hover:bg-white/5"
+                style={{ borderColor: TEMPO.borderStrong, color: TEMPO.text }}
               >
                 <Plus size={14} />
                 {isInProgress ? "Pas encore, ajouter du temps" : "Non, ajouter du temps"}
@@ -110,7 +121,8 @@ export default function EndTaskPopup() {
                     markTaskSkipped(endTaskPopup.id);
                   }
                 }}
-                className="w-full py-2.5 text-xs text-white/40 hover:text-white/70 transition"
+                className="w-full py-2.5 text-xs transition"
+                style={{ color: TEMPO.textDim }}
               >
                 {isInProgress ? "Continuer normalement" : "Passer à la prochaine tâche"}
               </button>
@@ -119,26 +131,35 @@ export default function EndTaskPopup() {
         ) : (
           <>
             <div className="flex items-center gap-2 mb-1">
-              <Clock size={16} style={{ color: endTaskPopup.color }} />
-              <h3 className="text-lg font-light">Combien de temps ajouter ?</h3>
+              <Clock size={16} style={{ color: accent }} />
+              <h3 className="text-lg font-light" style={{ color: TEMPO.text }}>
+                Combien de temps ajouter ?
+              </h3>
             </div>
-            <p className="text-xs text-white/40 mb-5">
+            <p className="text-xs mb-5" style={{ color: TEMPO.textDim }}>
               Les tâches suivantes seront décalées automatiquement
             </p>
 
             <div className="mb-5">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-2 block">
+              <label
+                className="text-[10px] uppercase tracking-[0.22em] mb-2 block"
+                style={{ color: TEMPO.textDim }}
+              >
                 Durée supplémentaire
               </label>
               <div className="relative">
                 <select
                   value={extendMinutes}
                   onChange={(e) => setExtendMinutes(parseInt(e.target.value, 10))}
-                  className="w-full appearance-none bg-white/5 border rounded-xl pl-4 pr-10 py-3.5 text-base font-medium focus:outline-none cursor-pointer transition"
-                  style={{ borderColor: endTaskPopup.color + "50", color: endTaskPopup.color }}
+                  className="w-full appearance-none rounded-xl pl-4 pr-10 py-3.5 text-base font-medium focus:outline-none cursor-pointer transition"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${accent}50`,
+                    color: accent,
+                  }}
                 >
                   {[1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90, 105, 120, 150, 180].map((min) => (
-                    <option key={min} value={min} className="bg-neutral-900 text-white">
+                    <option key={min} value={min} style={{ background: TEMPO.bgAlt, color: TEMPO.text }}>
                       +{min} minute{min > 1 ? "s" : ""}
                     </option>
                   ))}
@@ -146,7 +167,7 @@ export default function EndTaskPopup() {
                 <ChevronDown
                   size={16}
                   className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                  style={{ color: endTaskPopup.color }}
+                  style={{ color: accent }}
                 />
               </div>
             </div>
@@ -154,14 +175,15 @@ export default function EndTaskPopup() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowExtendChoice(false)}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-sm hover:bg-white/5 transition"
+                className="flex-1 py-3 rounded-xl border text-sm transition hover:bg-white/5"
+                style={{ borderColor: TEMPO.border, color: TEMPO.text }}
               >
                 Retour
               </button>
               <button
                 onClick={() => extendTask(endTaskPopup, extendMinutes)}
                 className="flex-1 py-3 rounded-xl text-sm font-medium transition hover:scale-[1.02]"
-                style={{ background: endTaskPopup.color, color: "#000" }}
+                style={{ background: accent, color: "#1A1206" }}
               >
                 Confirmer
               </button>

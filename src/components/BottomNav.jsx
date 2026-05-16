@@ -1,16 +1,15 @@
 import { BarChart3, Home, Plus, User, CalendarDays } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
+import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
 
 export default function BottomNav() {
   const {
-    dayTheme,
     showStats, setShowStats,
     showProfile, setShowProfile,
     setProfileDraft, user,
     setShowAdd, setEditingTask, setIsFloatingForm,
     focusMode, activeMeditation, showBrain, showCustomization,
     showSubscription,
-    selectedDay, setSelectedDay,
   } = useFocus();
 
   // Hide on non-main screens (full screen replacements)
@@ -20,13 +19,6 @@ export default function BottomNav() {
   const isStats = showStats;
   const isProfile = showProfile;
   const isDashboard = !showStats && !showProfile;
-
-  // Dashboard sub-tab: planning vs timer ring — we treat selectedDay navigation
-  // as "planning" (any day other than today) vs "home" (today).
-  // For now: home = dashboard main, planning = week/task planner (same screen,
-  // just scrolls to timeline — we toggle a context flag later if needed).
-
-  const accent = dayTheme?.accent ?? "#A78BFA";
 
   const navItems = [
     {
@@ -43,11 +35,10 @@ export default function BottomNav() {
       id: "planning",
       icon: CalendarDays,
       label: "Planning",
-      active: false, // future screen
+      active: false,
       onPress: () => {
         setShowStats(false);
         if (showProfile) setShowProfile(false);
-        // Scroll-to-timeline or future PlanningScreen
       },
     },
     { id: "add", icon: Plus, label: "", active: false, isCTA: true },
@@ -85,12 +76,13 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-5 px-4 pointer-events-none">
       <nav
-        className="pointer-events-auto flex items-center gap-1 px-3 py-2.5 rounded-[28px] border border-white/[0.08]"
+        className="pointer-events-auto flex items-center gap-1 px-3 py-2.5 rounded-[28px]"
         style={{
-          background: "rgba(14,14,14,0.72)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset",
+          background: "rgba(7,19,38,0.78)",
+          backdropFilter: "blur(28px) saturate(180%)",
+          WebkitBackdropFilter: "blur(28px) saturate(180%)",
+          border: `1px solid ${TEMPO.border}`,
+          boxShadow: "0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
           maxWidth: 340,
           width: "100%",
         }}
@@ -105,12 +97,12 @@ export default function BottomNav() {
                 style={{
                   width: 52,
                   height: 52,
-                  background: `linear-gradient(135deg, ${accent}ee, ${accent}99)`,
-                  boxShadow: `0 0 20px ${accent}55, 0 4px 12px rgba(0,0,0,0.4)`,
+                  background: TEMPO_GRADIENTS.gold,
+                  boxShadow: TEMPO_SHADOWS.gold,
                   flexShrink: 0,
                 }}
               >
-                <Plus size={22} strokeWidth={2.5} className="text-white" />
+                <Plus size={22} strokeWidth={2.5} style={{ color: "#1A1206" }} />
               </button>
             );
           }
@@ -120,22 +112,22 @@ export default function BottomNav() {
             <button
               key={item.id}
               onClick={item.onPress}
-              className="flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90"
+              className="relative flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90"
               style={{ flex: 1, minWidth: 48, paddingTop: 4, paddingBottom: 4 }}
             >
               <Icon
                 size={20}
                 strokeWidth={item.active ? 2 : 1.5}
                 style={{
-                  color: item.active ? accent : "rgba(255,255,255,0.35)",
-                  transition: "color 0.2s, opacity 0.2s",
+                  color: item.active ? TEMPO.gold : TEMPO.textDim + "80",
+                  transition: "color 0.2s",
                 }}
               />
               {item.label ? (
                 <span
                   className="text-[9px] tracking-wide font-medium leading-none"
                   style={{
-                    color: item.active ? accent : "rgba(255,255,255,0.28)",
+                    color: item.active ? TEMPO.gold : TEMPO.textDim + "70",
                     transition: "color 0.2s",
                   }}
                 >
@@ -148,8 +140,8 @@ export default function BottomNav() {
                   style={{
                     width: 3,
                     height: 3,
-                    background: accent,
-                    opacity: 0.7,
+                    background: TEMPO.gold,
+                    boxShadow: `0 0 6px ${TEMPO.gold}`,
                   }}
                 />
               )}

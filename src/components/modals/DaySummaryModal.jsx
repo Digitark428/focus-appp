@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { toMin } from "../../utils/time";
+import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
 export default function DaySummaryModal() {
   const {
@@ -41,47 +42,71 @@ export default function DaySummaryModal() {
   // Coaching message based on completion rate.
   let coachTitle = "";
   let coachMessage = "";
-  let coachColor = dayTheme.accent;
+  let coachColor = TEMPO.gold;
 
   if (completionRate === 100 && delayMin === 0) {
     coachTitle = "Journée parfaite ! 🎯";
     coachMessage = "Vous avez tout accompli, sans aucun retard. Quelle régularité ! Continuez sur cette lancée, c'est exactement ce qui fait la différence.";
-    coachColor = "#34D399";
+    coachColor = TEMPO.success;
   } else if (completionRate >= 80) {
     coachTitle = "Excellente journée 👏";
     coachMessage = `Vous avez accompli ${doneTasks} tâches sur ${totalTasks}. C'est une journée très solide. ${
       delayMin > 0 ? `Le petit retard de ${delayMin} min est tout à fait normal.` : "Bravo pour la précision !"
     }`;
-    coachColor = "#34D399";
+    coachColor = TEMPO.success;
   } else if (completionRate >= 50) {
     coachTitle = "Bonne journée 👍";
     coachMessage = `${doneTasks} tâches accomplies sur ${totalTasks}, c'est une moitié pleine. Demain, essayez peut-être de réduire le nombre de tâches ou d'allonger leur durée pour finir en beauté.`;
-    coachColor = "#FBBF24";
+    coachColor = TEMPO.gold;
   } else if (completionRate > 0) {
     coachTitle = "Une journée d'apprentissage";
     coachMessage = `Vous avez validé ${doneTasks} tâche${doneTasks > 1 ? "s" : ""} sur ${totalTasks}. Pas de jugement : peut-être que votre planning était trop ambitieux. Réajustez pour demain, c'est ça qui compte.`;
-    coachColor = "#FB923C";
+    coachColor = "#E2B872";
   } else {
     coachTitle = "Demain est un nouveau jour";
     coachMessage = "Aucune tâche validée aujourd'hui. C'est OK, ça arrive. L'important c'est de revenir demain avec un plan plus simple. Petits pas, grandes victoires.";
-    coachColor = "#F472B6";
+    coachColor = TEMPO.textDim;
   }
 
+  const statCard = {
+    background: "rgba(255,255,255,0.025)",
+    border: `1px solid ${TEMPO.border}`,
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[80] flex items-end sm:items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
+      style={{ background: "rgba(7,19,38,0.85)" }}
+    >
       <div
-        className="bg-neutral-900 border rounded-3xl p-6 w-full max-w-sm max-h-[92vh] overflow-y-auto"
-        style={{ borderColor: dayTheme.accent + "50", boxShadow: `0 20px 80px ${dayTheme.accent}40` }}
+        className="rounded-3xl p-6 w-full max-w-sm max-h-[92vh] overflow-y-auto"
+        style={{
+          background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
+          border: `1px solid ${TEMPO.gold}50`,
+          boxShadow: `0 20px 80px ${TEMPO.gold}30, ${TEMPO_SHADOWS.cardHi}`,
+        }}
       >
         <div className="text-center mb-6">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-2">
+          <p
+            className="text-[10px] uppercase tracking-[0.3em] mb-2"
+            style={{ color: TEMPO.textDim }}
+          >
             Bilan · {dayTheme.name}
           </p>
-          <h3 className="text-2xl font-light mb-3">{coachTitle}</h3>
+          <h3 className="text-2xl font-light mb-3" style={{ color: TEMPO.text }}>
+            {coachTitle}
+          </h3>
 
           <div className="relative w-36 h-36 mx-auto my-6">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 144 144">
-              <circle cx="72" cy="72" r="64" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: `radial-gradient(circle, ${coachColor}25 0%, transparent 65%)`,
+                filter: "blur(16px)",
+              }}
+            />
+            <svg className="w-full h-full -rotate-90 relative" viewBox="0 0 144 144">
+              <circle cx="72" cy="72" r="64" stroke="rgba(255,255,255,0.06)" strokeWidth="6" fill="none" />
               <circle
                 cx="72" cy="72" r="64" stroke={coachColor} strokeWidth="6" fill="none"
                 strokeLinecap="round"
@@ -95,54 +120,71 @@ export default function DaySummaryModal() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <p className="text-4xl font-extralight font-mono tabular-nums" style={{ color: coachColor }}>
-                {completionRate}<span className="text-xl text-white/40">%</span>
+                {completionRate}
+                <span className="text-xl" style={{ color: TEMPO.textDim }}>%</span>
               </p>
-              <p className="text-[10px] uppercase tracking-widest text-white/40 mt-1">respecté</p>
+              <p
+                className="text-[10px] uppercase tracking-widest mt-1"
+                style={{ color: TEMPO.textDim }}
+              >
+                respecté
+              </p>
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-white/70 leading-relaxed text-center px-2 mb-6 italic">
+        <p
+          className="text-sm leading-relaxed text-center px-2 mb-6 italic"
+          style={{ color: TEMPO.text + "c0" }}
+        >
           {coachMessage}
         </p>
 
         <div className="grid grid-cols-2 gap-2.5 mb-5">
-          <div
-            className="rounded-xl p-3 border"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-1">Validées</p>
+          <div className="rounded-xl p-3" style={statCard}>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] mb-1"
+              style={{ color: TEMPO.textDim }}
+            >
+              Validées
+            </p>
             <p className="text-lg font-light">
-              <span style={{ color: dayTheme.accent }}>{doneTasks}</span>
-              <span className="text-white/40"> / {totalTasks}</span>
+              <span style={{ color: TEMPO.gold }}>{doneTasks}</span>
+              <span style={{ color: TEMPO.textDim }}> / {totalTasks}</span>
             </p>
           </div>
-          <div
-            className="rounded-xl p-3 border"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-1">Travail</p>
-            <p className="text-lg font-light font-mono tabular-nums">
+          <div className="rounded-xl p-3" style={statCard}>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] mb-1"
+              style={{ color: TEMPO.textDim }}
+            >
+              Travail
+            </p>
+            <p className="text-lg font-light font-mono tabular-nums" style={{ color: TEMPO.text }}>
               {Math.floor(workMin / 60)}h{String(workMin % 60).padStart(2, "0")}
             </p>
           </div>
-          <div
-            className="rounded-xl p-3 border"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-1">Pause</p>
-            <p className="text-lg font-light font-mono tabular-nums">
+          <div className="rounded-xl p-3" style={statCard}>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] mb-1"
+              style={{ color: TEMPO.textDim }}
+            >
+              Pause
+            </p>
+            <p className="text-lg font-light font-mono tabular-nums" style={{ color: TEMPO.text }}>
               {pauseMin > 0 ? `${pauseMin} min` : "Aucune"}
             </p>
           </div>
-          <div
-            className="rounded-xl p-3 border"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-1">Retard</p>
+          <div className="rounded-xl p-3" style={statCard}>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] mb-1"
+              style={{ color: TEMPO.textDim }}
+            >
+              Retard
+            </p>
             <p
               className="text-lg font-light font-mono tabular-nums"
-              style={{ color: delayMin > 30 ? "#F87171" : delayMin > 10 ? "#FBBF24" : "#FFFFFF" }}
+              style={{ color: delayMin > 30 ? TEMPO.danger : delayMin > 10 ? TEMPO.warning : TEMPO.text }}
             >
               {delayMin > 0 ? `+${delayMin} min` : "0"}
             </p>
@@ -150,7 +192,10 @@ export default function DaySummaryModal() {
         </div>
 
         {skippedTasks > 0 && (
-          <p className="text-[11px] text-white/40 text-center mb-4 italic">
+          <p
+            className="text-[11px] text-center mb-4 italic"
+            style={{ color: TEMPO.textDim }}
+          >
             {skippedTasks} tâche{skippedTasks > 1 ? "s" : ""} passée{skippedTasks > 1 ? "s" : ""}
           </p>
         )}
@@ -158,14 +203,19 @@ export default function DaySummaryModal() {
         <button
           onClick={() => { setShowDaySummary(false); setShowStats(true); }}
           className="w-full py-3.5 rounded-xl text-sm font-medium transition hover:scale-[1.02] flex items-center justify-center gap-2"
-          style={{ background: dayTheme.accent, color: "#000" }}
+          style={{
+            background: TEMPO_GRADIENTS.gold,
+            color: "#1A1206",
+            boxShadow: TEMPO_SHADOWS.gold,
+          }}
         >
           <BarChart3 size={14} />
           Voir mes stats de la semaine
         </button>
         <button
           onClick={() => setShowDaySummary(false)}
-          className="w-full mt-2 py-2.5 text-xs text-white/40 hover:text-white/70 transition"
+          className="w-full mt-2 py-2.5 text-xs transition"
+          style={{ color: TEMPO.textDim }}
         >
           Fermer
         </button>

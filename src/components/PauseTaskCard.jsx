@@ -1,6 +1,7 @@
 import { CheckCircle2, ChevronDown, Moon, Pencil, Trash2, X } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
+import { TEMPO } from "../utils/tempoTheme";
 
 export default function PauseTaskCard({ task }) {
   const {
@@ -36,10 +37,10 @@ export default function PauseTaskCard({ task }) {
       }`}
       style={{
         background: isCurrent
-          ? "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%)"
-          : "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)",
-        border: `1px solid ${isCurrent ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.10)"}`,
-        boxShadow: isCurrent ? "0 8px 32px rgba(255,255,255,0.08)" : "none",
+          ? "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)"
+          : "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+        border: `1px solid ${isCurrent ? "rgba(255,255,255,0.20)" : TEMPO.border}`,
+        boxShadow: isCurrent ? "0 8px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
         opacity: isPast && !isCurrent && !completion ? 0.55 : 1,
         cursor: isDragging ? "grabbing" : "grab",
       }}
@@ -49,7 +50,7 @@ export default function PauseTaskCard({ task }) {
           className="absolute inset-y-0 left-0 pointer-events-none transition-all"
           style={{
             width: `${taskProg}%`,
-            background: "linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.14) 100%)",
+            background: "linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 100%)",
             transition: "width 1s linear",
           }}
         />
@@ -72,37 +73,49 @@ export default function PauseTaskCard({ task }) {
 
         <div
           className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)" }}
+          style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${TEMPO.borderStrong}` }}
         >
-          <Moon size={16} className="text-white/80" />
+          <Moon size={16} style={{ color: TEMPO.textDim }} />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-0.5">
             <div className="flex items-center gap-2">
-              <h4 className="font-medium text-white">Pause</h4>
+              <h4 className="font-medium" style={{ color: TEMPO.text }}>Pause</h4>
               {(completion === "done" || (isPast && !isCurrent && !completion)) && (
-                <CheckCircle2 size={12} className="text-white/60 shrink-0" />
+                <CheckCircle2 size={12} className="shrink-0" style={{ color: TEMPO.textDim }} />
               )}
-              {completion === "skipped" && <X size={12} className="text-white/30 shrink-0" />}
+              {completion === "skipped" && <X size={12} className="shrink-0" style={{ color: TEMPO.textMuted }} />}
             </div>
-            <span className="text-xs text-white/40 font-mono tabular-nums whitespace-nowrap">
+            <span
+              className="text-xs font-mono tabular-nums whitespace-nowrap"
+              style={{ color: TEMPO.textDim }}
+            >
               {task.start} – {task.end}
             </span>
           </div>
-          <p className="text-[11px] text-white/45 leading-tight italic">{cat?.tagline}</p>
+          <p className="text-[11px] leading-tight italic" style={{ color: TEMPO.textMuted }}>
+            {cat?.tagline}
+          </p>
         </div>
 
         <ChevronDown
           size={15}
-          className="text-white/30 shrink-0 transition-transform"
-          style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0)" }}
+          className="shrink-0 transition-transform"
+          style={{
+            color: TEMPO.textMuted,
+            transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
+          }}
         />
       </button>
 
       {isExpanded && (
-        <div className="px-5 pb-4 space-y-2 border-t border-white/8 pt-3">
-          {task.notes && <p className="text-xs text-white/50 italic leading-relaxed mb-3">{task.notes}</p>}
+        <div className="px-5 pb-4 space-y-2 pt-3" style={{ borderTop: `1px solid ${TEMPO.border}` }}>
+          {task.notes && (
+            <p className="text-xs italic leading-relaxed mb-3" style={{ color: TEMPO.textDim }}>
+              {task.notes}
+            </p>
+          )}
 
           {isCurrent && !completion && (
             <div className="flex gap-2">
@@ -113,14 +126,24 @@ export default function PauseTaskCard({ task }) {
                   popupTriggerKindRef.current = "manual";
                   setEndTaskPopup(task);
                 }}
-                className="flex-1 py-2.5 rounded-xl border border-white/15 bg-white/5 flex items-center justify-center gap-2 transition hover:bg-white/10 text-white/80"
+                className="flex-1 py-2.5 rounded-xl border flex items-center justify-center gap-2 transition hover:bg-white/10"
+                style={{
+                  borderColor: TEMPO.borderStrong,
+                  background: "rgba(255,255,255,0.05)",
+                  color: TEMPO.text,
+                }}
               >
                 <CheckCircle2 size={14} />
                 <span className="text-xs font-medium">Terminer</span>
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); openEdit(task); }}
-                className="flex-1 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center gap-2 transition hover:bg-white/5 text-white/50 hover:text-white/70"
+                className="flex-1 py-2.5 rounded-xl border flex items-center justify-center gap-2 transition"
+                style={{
+                  borderColor: TEMPO.border,
+                  background: "rgba(255,255,255,0.025)",
+                  color: TEMPO.textDim,
+                }}
               >
                 <Pencil size={13} />
                 <span className="text-xs font-medium">Modifier</span>
@@ -132,14 +155,16 @@ export default function PauseTaskCard({ task }) {
             {!isCurrent && (
               <button
                 onClick={(e) => { e.stopPropagation(); openEdit(task); }}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition flex items-center justify-center text-white/30 hover:text-white/60"
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition flex items-center justify-center"
+                style={{ color: TEMPO.textMuted }}
               >
                 <Pencil size={13} />
               </button>
             )}
             <button
               onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-              className="w-8 h-8 rounded-full hover:bg-red-500/10 transition flex items-center justify-center text-white/30 hover:text-red-400"
+              className="w-8 h-8 rounded-full hover:bg-red-500/10 transition flex items-center justify-center hover:text-red-400"
+              style={{ color: TEMPO.textMuted }}
             >
               <Trash2 size={13} />
             </button>

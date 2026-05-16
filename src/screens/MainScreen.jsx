@@ -1,11 +1,11 @@
 import { useAmbientAudio } from "../hooks/useAmbientAudio";
 import { useCustomAudio } from "../hooks/useCustomAudio";
 import { useFocus } from "../context/FocusContext";
+import { TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
 // Layout & banners
-import SolarAmbianceLayer from "../components/SolarAmbianceLayer";
 import MainHeader from "../components/MainHeader";
-import { TrialBanner, BrainBanner, ConflictsBanner } from "../components/Banners";
+import { TrialBanner, ConflictsBanner } from "../components/Banners";
 import { CurrentTaskTopBar, DemoBanner } from "../components/SmallBanners";
 import WeekSelector from "../components/WeekSelector";
 import GoalProgress from "../components/GoalProgress";
@@ -34,22 +34,39 @@ import {
   BrainNewNodeBurst, DragGhost, SwapToast, TaskTransition, ValidationBurst,
 } from "../components/overlays/AnimatedOverlays";
 
+// ============================================================
+//  MainScreen — Dashboard Tempo.
+//  Le SolarAmbianceLayer (soleil dynamique) et le BrainBanner
+//  (cerveau dans le dashboard) ont été retirés du flux visuel
+//  selon la nouvelle direction artistique. Le BrainScreen reste
+//  accessible via le menu / paramètres.
+// ============================================================
 export default function MainScreen() {
   const { activeAmbient, ambientVolume, activeCustomTrack, customTracks, isRunning } = useFocus();
 
-  // Audio hooks must be called inside the provider (i.e. inside MainScreen).
   useAmbientAudio(activeAmbient, ambientVolume);
   useCustomAudio(activeCustomTrack, customTracks, ambientVolume);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white relative overflow-hidden">
-      <SolarAmbianceLayer />
+    <div
+      className="min-h-screen text-white relative overflow-hidden"
+      style={{ background: TEMPO_GRADIENTS.bgRadial }}
+    >
+      {/* Texture grain premium (overlay subtil) */}
+      <div
+        className="absolute inset-0 opacity-[0.025] pointer-events-none mix-blend-overlay z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)",
+          backgroundSize: "3px 3px",
+        }}
+      />
+
       <CurrentTaskTopBar />
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-28">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-32">
         <MainHeader />
         <TrialBanner />
-        <BrainBanner />
         <ConflictsBanner />
         <WeekSelector />
         <GoalProgress />

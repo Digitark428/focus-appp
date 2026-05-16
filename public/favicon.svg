@@ -1,5 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
-  <text x="50%" y="58%" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="200" fill="white">f</text>
-  <circle cx="44" cy="44" r="4" fill="#A78BFA"/>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E2148"/>
+      <stop offset="100%" stop-color="#0B1D3A"/>
+    </linearGradient>
+    <radialGradient id="lt" cx="78%" cy="28%" r="60%">
+      <stop offset="0%" stop-color="#F2D28F" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F2E0BA"/>
+      <stop offset="100%" stop-color="#C9A877"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect width="64" height="64" rx="14" fill="url(#lt)"/>
+  <g transform="translate(4,0) skewX(-12)">
+    <rect x="14" y="20" width="34" height="6" rx="3" fill="url(#bar)"/>
+    <rect x="14" y="30" width="32" height="6" rx="3" fill="url(#bar)"/>
+    <rect x="14" y="40" width="18" height="6" rx="3" fill="url(#bar)"/>
+  </g>
+  <circle cx="44" cy="43" r="3" fill="#F2D28F"/>
 </svg>

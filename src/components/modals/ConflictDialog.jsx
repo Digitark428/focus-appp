@@ -1,22 +1,25 @@
 import { useFocus } from "../../context/FocusContext";
+import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
 export default function ConflictDialog() {
-  const { conflictDialog, setConflictDialog, applyEditWithCascade, dayTheme } = useFocus();
+  const { conflictDialog, setConflictDialog, applyEditWithCascade } = useFocus();
   if (!conflictDialog) return null;
 
   const closable = conflictDialog.type !== "overflow";
 
   return (
     <div
-      className="fixed inset-0 bg-black/85 backdrop-blur-md z-[78] flex items-end sm:items-center justify-center p-4"
+      className="fixed inset-0 z-[78] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
+      style={{ background: "rgba(7,19,38,0.85)" }}
       onClick={() => closable && setConflictDialog(null)}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-neutral-900 border rounded-3xl p-6 w-full max-w-sm"
+        className="rounded-3xl p-6 w-full max-w-sm"
         style={{
-          borderColor: "rgba(248,113,113,0.5)",
-          boxShadow: "0 20px 60px rgba(248,113,113,0.25)",
+          background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
+          border: `1px solid rgba(248,113,113,0.5)`,
+          boxShadow: `0 20px 60px rgba(248,113,113,0.20), ${TEMPO_SHADOWS.cardHi}`,
         }}
       >
         <div className="flex flex-col items-center text-center mb-5">
@@ -26,19 +29,19 @@ export default function ConflictDialog() {
           >
             ⚠️
           </div>
-          <h3 className="text-xl font-light mb-2">
+          <h3 className="text-xl font-light mb-2" style={{ color: TEMPO.text }}>
             {conflictDialog.type === "invalid" && "Horaires invalides"}
             {conflictDialog.type === "edit" && "Conflit d'horaire"}
             {conflictDialog.type === "fullyCovered" && "Tâche déjà programmée"}
             {conflictDialog.type === "overflow" && "Décalage impossible"}
             {conflictDialog.type === "repairFailed" && "Réparation impossible"}
           </h3>
-          <p className="text-sm text-white/60 leading-relaxed">
+          <p className="text-sm leading-relaxed" style={{ color: TEMPO.textDim }}>
             {conflictDialog.type === "invalid" && conflictDialog.message}
             {conflictDialog.type === "edit" && (
               <>
                 Cette modification chevauche {conflictDialog.conflicts.length === 1 ? "la tâche" : "les tâches"}{" "}
-                <span className="font-medium text-white">
+                <span className="font-medium" style={{ color: TEMPO.text }}>
                   {conflictDialog.conflicts.map((c) => c.name).join(", ")}
                 </span>.
                 {conflictDialog.overflow
@@ -49,7 +52,7 @@ export default function ConflictDialog() {
             {conflictDialog.type === "fullyCovered" && (
               <>
                 Le créneau choisi recouvre entièrement{" "}
-                <span className="font-medium text-white">
+                <span className="font-medium" style={{ color: TEMPO.text }}>
                   {conflictDialog.conflicts.map((c) => c.name).join(", ")}
                 </span>. Modifiez l'horaire ou supprimez la tâche existante d'abord.
               </>
@@ -67,15 +70,23 @@ export default function ConflictDialog() {
 
         {conflictDialog.type === "edit" && conflictDialog.conflicts && (
           <div
-            className="rounded-xl border p-3 mb-4 space-y-1.5"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}
+            className="rounded-xl p-3 mb-4 space-y-1.5"
+            style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${TEMPO.border}` }}
           >
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-1.5">Tâches impactées</p>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] mb-1.5"
+              style={{ color: TEMPO.textDim }}
+            >
+              Tâches impactées
+            </p>
             {conflictDialog.conflicts.map((c, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />
-                <span className="text-xs text-white/80 flex-1">{c.name}</span>
-                <span className="text-[10px] text-white/40 font-mono tabular-nums">
+                <span className="text-xs flex-1" style={{ color: TEMPO.text }}>{c.name}</span>
+                <span
+                  className="text-[10px] font-mono tabular-nums"
+                  style={{ color: TEMPO.textDim }}
+                >
                   {c.start} → {c.end}
                 </span>
               </div>
@@ -88,7 +99,11 @@ export default function ConflictDialog() {
             <button
               onClick={applyEditWithCascade}
               className="w-full py-3.5 rounded-xl text-sm font-medium transition hover:scale-[1.02]"
-              style={{ background: dayTheme.accent, color: "#000" }}
+              style={{
+                background: TEMPO_GRADIENTS.gold,
+                color: "#1A1206",
+                boxShadow: TEMPO_SHADOWS.gold,
+              }}
             >
               Décaler les tâches suivantes
             </button>
@@ -96,7 +111,8 @@ export default function ConflictDialog() {
 
           <button
             onClick={() => setConflictDialog(null)}
-            className="w-full py-3 rounded-xl text-sm font-medium transition hover:bg-white/5 border border-white/10 text-white/80"
+            className="w-full py-3 rounded-xl text-sm font-medium transition hover:bg-white/5 border"
+            style={{ borderColor: TEMPO.border, color: TEMPO.text }}
           >
             {conflictDialog.type === "edit"
               || conflictDialog.type === "fullyCovered"

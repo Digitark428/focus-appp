@@ -10,12 +10,14 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #0a0a0a;
-  color: white;
-  font-family: Inter, system-ui, sans-serif;
+  background: #071326;
+  color: #F5F7FA;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter",
+    "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
+  letter-spacing: -0.005em;
 }
 
 /* Hide scrollbars on horizontal lists */
@@ -26,6 +28,13 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Native date input — accent doré */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(85%) sepia(30%) saturate(400%) hue-rotate(5deg);
+  opacity: 0.6;
+  cursor: pointer;
 }
 
 /* ============================================================
@@ -101,6 +110,8 @@ body {
   50% { opacity: 0.8; transform: scale(1.1); }
 }
 
+/* Anciennes animations solaires conservées par compatibilité
+   au cas où un composant légataire les invoque encore. */
 @keyframes solar-breathe {
   0%, 100% { opacity: 0.85; transform: scale(1) translateX(-50%); }
   50% { opacity: 1; transform: scale(1.06) translateX(-47%); }
@@ -109,4 +120,10 @@ body {
 @keyframes solar-shimmer {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
+}
+
+/* Tempo — pulsations dorées subtiles */
+@keyframes tempo-gold-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,179,106,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(217,179,106,0); }
 }

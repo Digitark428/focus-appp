@@ -12,9 +12,11 @@ export const DAY_NAMES = [
 // Color palettes — each defines 7 colors (one per day of the week).
 export const CUSTOM_THEMES = {
   default: {
-    label: "Original",
-    description: "Le thème classique de Focus",
-    colors: ["#A78BFA", "#60A5FA", "#34D399", "#FBBF24", "#FB923C", "#F472B6", "#94A3B8"],
+    label: "Tempo",
+    description: "Doré nuit · identité officielle Tempo",
+    // 7 nuances dorées subtilement variées — une par jour, mais
+    // toutes dans la famille Tempo pour préserver l'identité.
+    colors: ["#D9B36A", "#E2C078", "#F2D28F", "#D9B36A", "#E8C684", "#F2D28F", "#C9A361"],
   },
   ocean: {
     label: "Océan",

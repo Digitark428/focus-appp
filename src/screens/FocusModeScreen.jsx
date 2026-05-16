@@ -2,17 +2,18 @@ import { X } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { formatTime } from "../utils/time";
 import { AMBIENT_SOUNDS } from "../constants/tasks";
+import { TEMPO, TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
 export default function FocusModeScreen() {
   const {
     setFocusMode, currentTask, nextTask, progress, remainingSec,
-    activeAmbient, activeCustomTrack, customTracks, dayTheme,
+    activeAmbient, activeCustomTrack, customTracks,
   } = useFocus();
 
   const bigRadius = 160;
   const bigCircumference = 2 * Math.PI * bigRadius;
   const bigOffset = bigCircumference - (progress / 100) * bigCircumference;
-  const accent = currentTask?.color || dayTheme.accent;
+  const accent = currentTask?.color || TEMPO.gold;
 
   const activeSound = activeAmbient
     ? AMBIENT_SOUNDS.find((s) => s.id === activeAmbient)?.name
@@ -21,8 +22,11 @@ export default function FocusModeScreen() {
       : null;
 
   return (
-    <div className="fixed inset-0 bg-neutral-950 text-white flex flex-col items-center justify-center z-50 overflow-hidden">
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
+    <div
+      className="fixed inset-0 flex flex-col items-center justify-center z-50 overflow-hidden"
+      style={{ background: TEMPO_GRADIENTS.bgRadial, color: TEMPO.text }}
+    >
+      <div className="absolute inset-0 opacity-25 pointer-events-none">
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl"
           style={{ background: accent }}
@@ -31,15 +35,24 @@ export default function FocusModeScreen() {
 
       <button
         onClick={() => setFocusMode(false)}
-        className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/5 backdrop-blur flex items-center justify-center hover:bg-white/10 transition z-10"
+        className="absolute top-6 right-6 w-11 h-11 rounded-full backdrop-blur flex items-center justify-center transition z-10 hover:bg-white/10"
+        style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${TEMPO.border}` }}
       >
-        <X size={18} />
+        <X size={18} style={{ color: TEMPO.text }} />
       </button>
 
       {activeSound && (
-        <div className="absolute top-6 left-6 px-3 py-2 rounded-full bg-white/5 backdrop-blur border border-white/10 flex items-center gap-2 text-xs">
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent }} />
-          <span className="text-white/70 truncate max-w-[160px]">{activeSound}</span>
+        <div
+          className="absolute top-6 left-6 px-3 py-2 rounded-full backdrop-blur border flex items-center gap-2 text-xs"
+          style={{ background: "rgba(255,255,255,0.05)", borderColor: TEMPO.border }}
+        >
+          <div
+            className="w-1.5 h-1.5 rounded-full animate-pulse"
+            style={{ background: accent, boxShadow: `0 0 4px ${accent}` }}
+          />
+          <span className="truncate max-w-[160px]" style={{ color: TEMPO.text + "b0" }}>
+            {activeSound}
+          </span>
         </div>
       )}
 
@@ -61,24 +74,45 @@ export default function FocusModeScreen() {
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           {currentTask ? (
             <>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">{currentTask.name}</p>
-              <div className="text-7xl font-extralight font-mono tabular-nums tracking-tight" style={{ color: accent }}>
+              <p
+                className="text-xs uppercase tracking-[0.3em] mb-3"
+                style={{ color: TEMPO.textDim }}
+              >
+                {currentTask.name}
+              </p>
+              <div
+                className="text-7xl font-extralight font-mono tabular-nums tracking-tight"
+                style={{ color: accent }}
+              >
                 {formatTime(remainingSec)}
               </div>
-              <div className="text-3xl font-light mt-3 text-white/70 tabular-nums">{Math.round(progress)}%</div>
+              <div
+                className="text-3xl font-light mt-3 tabular-nums"
+                style={{ color: TEMPO.text + "b0" }}
+              >
+                {Math.round(progress)}%
+              </div>
             </>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">en attente</p>
-              <div className="text-5xl font-extralight text-white/40">—</div>
+              <p
+                className="text-xs uppercase tracking-[0.3em] mb-3"
+                style={{ color: TEMPO.textDim }}
+              >
+                en attente
+              </p>
+              <div className="text-5xl font-extralight" style={{ color: TEMPO.textDim }}>—</div>
             </>
           )}
         </div>
       </div>
 
       {nextTask && (
-        <p className="absolute bottom-12 text-xs text-white/30 tracking-widest uppercase">
-          Ensuite · {nextTask.name}
+        <p
+          className="absolute bottom-12 text-xs tracking-widest uppercase"
+          style={{ color: TEMPO.textMuted }}
+        >
+          Ensuite · <span style={{ color: TEMPO.textDim }}>{nextTask.name}</span>
         </p>
       )}
     </div>

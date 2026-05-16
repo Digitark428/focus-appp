@@ -1,11 +1,11 @@
 {
-  "name": "Focus",
-  "short_name": "Focus",
-  "description": "Reprenez le contrôle du temps.",
+  "name": "Tempo.",
+  "short_name": "Tempo",
+  "description": "Reprenez le contrôle de votre journée.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#071326",
+  "theme_color": "#071326",
   "orientation": "portrait",
   "icons": [
     {
@@ -13,6 +13,12 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/tempo-logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

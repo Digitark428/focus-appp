@@ -1,16 +1,20 @@
 import { Check, ChevronLeft } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { CUSTOM_THEMES, DAY_NAMES } from "../constants/days";
+import { TEMPO, TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
 export default function CustomizationScreen() {
-  const { setShowCustomization, customTheme, setCustomTheme, dayTheme } = useFocus();
+  const { setShowCustomization, customTheme, setCustomTheme } = useFocus();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white relative overflow-hidden">
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: TEMPO_GRADIENTS.bgRadial, color: TEMPO.text }}
+    >
+      <div className="absolute inset-0 opacity-25 pointer-events-none">
         <div
           className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: dayTheme.glow }}
+          style={{ background: TEMPO.gold }}
         />
       </div>
 
@@ -18,15 +22,19 @@ export default function CustomizationScreen() {
         <header className="flex items-center justify-between mb-6">
           <button
             onClick={() => setShowCustomization(false)}
-            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition hover:bg-white/10"
+            style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${TEMPO.border}` }}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} style={{ color: TEMPO.text }} />
           </button>
-          <h2 className="text-lg font-light">Personnalisation</h2>
+          <h2 className="text-lg font-light" style={{ color: TEMPO.text }}>Personnalisation</h2>
           <div className="w-10" />
         </header>
 
-        <p className="text-sm text-white/60 text-center mb-8 leading-relaxed">
+        <p
+          className="text-sm text-center mb-8 leading-relaxed"
+          style={{ color: TEMPO.textDim }}
+        >
           Choisissez l'ambiance visuelle qui vous ressemble.
           <br />
           Chaque thème redéfinit les couleurs des 7 jours de la semaine.
@@ -42,23 +50,27 @@ export default function CustomizationScreen() {
                 className="w-full text-left rounded-2xl border p-4 transition hover:scale-[1.01]"
                 style={{
                   background: isActive
-                    ? `linear-gradient(135deg, ${theme.colors[0]}20 0%, ${theme.colors[3]}10 100%)`
+                    ? `linear-gradient(135deg, ${theme.colors[0]}22 0%, ${theme.colors[3]}10 100%)`
                     : "rgba(255,255,255,0.025)",
-                  borderColor: isActive ? theme.colors[0] + "60" : "rgba(255,255,255,0.08)",
-                  boxShadow: isActive ? `0 8px 32px ${theme.colors[0]}30` : "none",
+                  borderColor: isActive ? theme.colors[0] + "60" : TEMPO.border,
+                  boxShadow: isActive ? `0 8px 32px ${theme.colors[0]}25` : "none",
                 }}
               >
                 <div className="flex items-start justify-between mb-2.5">
                   <div className="flex-1">
-                    <p className="text-base font-medium">{theme.label}</p>
-                    <p className="text-xs text-white/50 mt-0.5">{theme.description}</p>
+                    <p className="text-base font-medium" style={{ color: TEMPO.text }}>
+                      {theme.label}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: TEMPO.textDim }}>
+                      {theme.description}
+                    </p>
                   </div>
                   {isActive && (
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center"
                       style={{ background: theme.colors[0] }}
                     >
-                      <Check size={12} className="text-black" strokeWidth={3} />
+                      <Check size={12} strokeWidth={3} style={{ color: "#1A1206" }} />
                     </div>
                   )}
                 </div>
@@ -73,7 +85,10 @@ export default function CustomizationScreen() {
                           boxShadow: isActive ? `0 0 12px ${c}60` : "none",
                         }}
                       />
-                      <p className="text-[8px] uppercase tracking-wider text-white/40">
+                      <p
+                        className="text-[8px] uppercase tracking-wider"
+                        style={{ color: TEMPO.textDim }}
+                      >
                         {DAY_NAMES[i].short}
                       </p>
                     </div>
@@ -84,13 +99,19 @@ export default function CustomizationScreen() {
           })}
         </div>
 
-        <p className="text-[11px] text-white/30 text-center italic px-4 leading-relaxed">
+        <p
+          className="text-[11px] text-center italic px-4 leading-relaxed"
+          style={{ color: TEMPO.textMuted }}
+        >
           Les thèmes ne modifient pas les couleurs de votre cerveau ni des catégories de tâches —
           <br />
           uniquement l'ambiance générale de l'application.
         </p>
 
-        <p className="text-[10px] text-white/20 text-center mt-8 italic">
+        <p
+          className="text-[10px] text-center mt-8 italic"
+          style={{ color: TEMPO.textMuted, opacity: 0.7 }}
+        >
           Plus de personnalisation arrivera dans une prochaine mise à jour.
         </p>
       </div>
