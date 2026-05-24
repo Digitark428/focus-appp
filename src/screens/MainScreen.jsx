@@ -29,17 +29,14 @@ import { NoTasksWarning, PauseConfirm } from "../components/modals/PauseAndNoTas
 import MenuDrawer from "../components/MenuDrawer";
 
 // Overlays
-import TutorialOverlay from "../components/overlays/TutorialOverlay";
 import {
-  BrainNewNodeBurst, DragGhost, SwapToast, TaskTransition, ValidationBurst,
+  DragGhost, SwapToast, TaskTransition, ValidationBurst,
 } from "../components/overlays/AnimatedOverlays";
 
 // ============================================================
 //  MainScreen — Dashboard Tempo.
-//  Le SolarAmbianceLayer (soleil dynamique) et le BrainBanner
-//  (cerveau dans le dashboard) ont été retirés du flux visuel
-//  selon la nouvelle direction artistique. Le BrainScreen reste
-//  accessible via le menu / paramètres.
+//  Écran principal de l'application : aperçu du jour, timeline
+//  des tâches, démarrage de la journée, modaux d'édition.
 // ============================================================
 export default function MainScreen() {
   const { activeAmbient, ambientVolume, activeCustomTrack, customTracks, isRunning } = useFocus();
@@ -90,12 +87,10 @@ export default function MainScreen() {
         <MenuDrawer />
 
         {/* Animated overlays */}
-        <TutorialOverlay />
         <ValidationBurst />
         <TaskTransition />
         <DragGhost />
         <SwapToast />
-        <BrainNewNodeBurst />
       </div>
     </div>
   );

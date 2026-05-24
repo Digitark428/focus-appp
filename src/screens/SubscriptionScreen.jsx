@@ -5,7 +5,7 @@ import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
 export default function SubscriptionScreen() {
   const {
     user, setUser, setShowSubscription, trialDaysLeft, trialExpired,
-    paymentForm, setPaymentForm, activateSubscription,
+    paymentForm, setPaymentForm, activateSubscription, handleLogout,
   } = useFocus();
 
   const forced = trialExpired;
@@ -231,7 +231,7 @@ export default function SubscriptionScreen() {
 
             {forced && (
               <button
-                onClick={() => setUser(null)}
+                onClick={handleLogout}
                 className="w-full mt-4 py-2.5 text-xs transition hover:text-white/70"
                 style={{ color: TEMPO.textDim }}
               >

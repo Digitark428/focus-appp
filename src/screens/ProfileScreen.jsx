@@ -1,4 +1,5 @@
-import { Calendar, Camera, ChevronLeft, LogOut, Mail, MapPin, Sparkles } from "lucide-react";
+import { Calendar, Camera, ChevronLeft, Eye, EyeOff, KeyRound, LogOut, Mail, MapPin, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useFocus } from "../context/FocusContext";
 import { calcAge } from "../utils/time";
 import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
@@ -7,11 +8,27 @@ export default function ProfileScreen() {
   const {
     user, setUser, profileDraft, setProfileDraft,
     setShowProfile, handlePhotoUpload,
+    passwordForm, setPasswordForm,
+    passwordChangeMessage, setPasswordChangeMessage,
+    changePassword, handleLogout,
   } = useFocus();
 
   const draft = profileDraft || user;
-  const closeWithoutSaving = () => { setShowProfile(false); setProfileDraft(null); };
-  const save = () => { setUser(draft); setShowProfile(false); setProfileDraft(null); };
+  const [showPwdSection, setShowPwdSection] = useState(false);
+  const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false });
+
+  const closeWithoutSaving = () => {
+    setShowProfile(false);
+    setProfileDraft(null);
+    setShowPwdSection(false);
+    setPasswordChangeMessage(null);
+    setPasswordForm({ current: "", next: "", confirm: "" });
+  };
+  const save = () => {
+    setUser(draft);
+    setShowProfile(false);
+    setProfileDraft(null);
+  };
 
   const inputCls = "w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition";
   const inputStyle = {
@@ -33,7 +50,7 @@ export default function ProfileScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-28">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-32">
         <header className="flex items-center justify-between mb-8">
           <button
             onClick={closeWithoutSaving}
@@ -147,6 +164,85 @@ export default function ProfileScreen() {
           </div>
         </div>
 
+        {/* Section Mot de passe — collapsible pour ne pas alourdir l'UI */}
+        <div className="mt-6">
+          <button
+            onClick={() => {
+              setShowPwdSection((v) => !v);
+              setPasswordChangeMessage(null);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition hover:bg-white/5"
+            style={{ borderColor: TEMPO.border }}
+          >
+            <KeyRound size={14} style={{ color: TEMPO.gold }} />
+            <span className="text-sm flex-1 text-left" style={{ color: TEMPO.text }}>
+              Modifier le mot de passe
+            </span>
+            <span className="text-[11px]" style={{ color: TEMPO.textDim }}>
+              {showPwdSection ? "Fermer" : "Ouvrir"}
+            </span>
+          </button>
+
+          {showPwdSection && (
+            <div
+              className="mt-3 p-4 rounded-2xl border space-y-3"
+              style={{ borderColor: TEMPO.border, background: "rgba(255,255,255,0.025)" }}
+            >
+              {[
+                { key: "current", label: "Mot de passe actuel" },
+                { key: "next", label: "Nouveau mot de passe (min. 6 car.)" },
+                { key: "confirm", label: "Confirmer le nouveau mot de passe" },
+              ].map(({ key, label }) => (
+                <div key={key} className="relative">
+                  <label className="text-xs mb-1.5 block ml-1" style={labelStyle}>{label}</label>
+                  <input
+                    type={showPwd[key] ? "text" : "password"}
+                    value={passwordForm[key]}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, [key]: e.target.value })}
+                    className={`${inputCls} pr-11`}
+                    style={inputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((s) => ({ ...s, [key]: !s[key] }))}
+                    className="absolute right-3 bottom-2.5 p-1"
+                    tabIndex={-1}
+                  >
+                    {showPwd[key]
+                      ? <EyeOff size={15} style={{ color: TEMPO.textDim }} />
+                      : <Eye size={15} style={{ color: TEMPO.textDim }} />}
+                  </button>
+                </div>
+              ))}
+
+              {passwordChangeMessage && (
+                <p
+                  className="text-[11px] text-center"
+                  style={{
+                    color: passwordChangeMessage.type === "success"
+                      ? TEMPO.success
+                      : TEMPO.danger,
+                  }}
+                >
+                  {passwordChangeMessage.text}
+                </p>
+              )}
+
+              <button
+                onClick={changePassword}
+                className="w-full py-2.5 rounded-xl text-sm font-medium transition active:scale-[0.98]"
+                style={{
+                  background: TEMPO_GRADIENTS.gold,
+                  color: "#1A1206",
+                  boxShadow: TEMPO_SHADOWS.goldSm,
+                }}
+              >
+                Mettre à jour le mot de passe
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2 mt-6">
           <button
             onClick={closeWithoutSaving}
@@ -169,7 +265,7 @@ export default function ProfileScreen() {
         </div>
 
         <button
-          onClick={() => setUser(null)}
+          onClick={handleLogout}
           className="w-full mt-3 py-3 rounded-xl text-sm hover:bg-red-500/10 transition flex items-center justify-center gap-2"
           style={{ color: "#F87171cc" }}
         >

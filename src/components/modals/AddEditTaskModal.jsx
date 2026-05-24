@@ -29,17 +29,26 @@ export default function AddEditTaskModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
-      style={{ background: "rgba(7,19,38,0.7)" }}
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center backdrop-blur-sm overflow-y-auto"
+      style={{
+        background: "rgba(7,19,38,0.7)",
+        paddingTop: "max(16px, env(safe-area-inset-top))",
+        paddingBottom: "max(120px, calc(env(safe-area-inset-bottom) + 120px))",
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
       onClick={() => setShowAdd(false)}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="rounded-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+        className="rounded-3xl p-6 w-full max-w-sm my-auto"
         style={{
           background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
           border: `1px solid ${TEMPO.borderStrong}`,
           boxShadow: TEMPO_SHADOWS.cardHi,
+          maxHeight: "calc(100dvh - 160px)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <h3 className="text-lg font-light mb-1" style={{ color: TEMPO.text }}>

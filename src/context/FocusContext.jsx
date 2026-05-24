@@ -3,10 +3,9 @@ import {
   DEFAULT_COMPLETIONS, DEFAULT_DAY_METRICS, DEFAULT_FLOATING, DEFAULT_TASKS,
   MEDITATIONS, TASK_CATEGORIES,
 } from "../constants/tasks";
-import { BRAIN_CYCLE_COLORS, BRAIN_CYCLE_DAYS } from "../constants/brain";
 import {
   cascadeShift, cascadeWouldOverflow, detectExistingConflicts, findConflicts,
-  fromMin, todayDateKey, todayIndex, toMin,
+  fromMin, todayIndex, toMin,
 } from "../utils/time";
 import { getDayThemes } from "../utils/themes";
 
@@ -23,23 +22,39 @@ const LONG_PRESS_MS = 350;
 
 export function FocusProvider({ children }) {
   // ── Auth ─────────────────────────────────────────────────────────────────
-  const [user, setUser] = useState(null);
+  // Tente de restaurer la session depuis le localStorage.
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem("tempo.session.user");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
   const [signupForm, setSignupForm] = useState({
     firstName: "", lastName: "", birthDate: "", email: "",
+    password: "", confirmPassword: "",
   });
+  // Auth mode for landing screen: "signup" | "login" | "forgot"
+  const [authMode, setAuthMode] = useState("signup");
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [forgotForm, setForgotForm] = useState({ email: "" });
+  const [authError, setAuthError] = useState(null);
   const [profileDraft, setProfileDraft] = useState(null);
+  // Password change in profile
+  const [passwordForm, setPasswordForm] = useState({
+    current: "", next: "", confirm: "",
+  });
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState(null);
   const [paymentForm, setPaymentForm] = useState({
     cardNumber: "", expiry: "", cvc: "", name: "",
   });
 
   // ── Navigation (which screen is on top) ──────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showPlanning, setShowPlanning] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
-  const [showBrain, setShowBrain] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [activeMeditation, setActiveMeditation] = useState(null);
 
@@ -58,14 +73,8 @@ export function FocusProvider({ children }) {
   const [showCustomTaskEditor, setShowCustomTaskEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [templateForm, setTemplateForm] = useState({
-    name: "", color: "#A78BFA", durationMin: 30, iconKey: "Zap",
+    name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap",
   });
-
-  // ── Brain (28-day cycles) ────────────────────────────────────────────────
-  const [validatedDates, setValidatedDates] = useState(new Set());
-  const [brainPreviewCycle, setBrainPreviewCycle] = useState(null);
-  const [brainNewNodeBurst, setBrainNewNodeBurst] = useState(null);
-  const lastBrainCheckRef = useRef(null);
 
   // ── Time / running state ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
@@ -153,13 +162,6 @@ export function FocusProvider({ children }) {
     return Math.max(0, Math.ceil(TRIAL_DAYS - elapsed));
   })();
   const trialExpired = user && !user.isSubscribed && trialDaysLeft <= 0;
-
-  // Brain derived numbers.
-  const brainTotalDays = validatedDates.size;
-  const brainCurrentCycleIdx = Math.floor(brainTotalDays / BRAIN_CYCLE_DAYS);
-  const brainDayInCycle = brainTotalDays % BRAIN_CYCLE_DAYS;
-  const brainCycleProgress = brainDayInCycle / BRAIN_CYCLE_DAYS;
-  const brainCurrentColor = BRAIN_CYCLE_COLORS[brainCurrentCycleIdx % BRAIN_CYCLE_COLORS.length];
 
   // ────────────────────────────────────────────────────────────────────────
   // Current / next task detection
@@ -283,25 +285,6 @@ export function FocusProvider({ children }) {
     return undefined;
   }, [dayCompletions, tasks, isRunning, selectedDay]);
 
-  // Brain validation: ≥80% of the day's tasks done → record a validated date.
-  useEffect(() => {
-    if (!isRunning || tasks.length === 0) return;
-    const doneCount = tasks.filter((t) => dayCompletions[t.id] === "done").length;
-    const ratio = doneCount / tasks.length;
-    if (ratio < 0.8) return;
-
-    const dateKey = todayDateKey();
-    if (validatedDates.has(dateKey)) return;
-    if (lastBrainCheckRef.current === dateKey) return;
-
-    lastBrainCheckRef.current = dateKey;
-    const newSet = new Set(validatedDates);
-    newSet.add(dateKey);
-    setValidatedDates(newSet);
-    setBrainNewNodeBurst({ ts: Date.now() });
-    setTimeout(() => setBrainNewNodeBurst(null), 2400);
-  }, [dayCompletions, tasks, isRunning, validatedDates]);
-
   // Drag listeners while a drag is active.
   useEffect(() => {
     if (!dragState) return undefined;
@@ -329,17 +312,143 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   // Auth actions
   // ────────────────────────────────────────────────────────────────────────
+
+  // Persiste la session utilisateur localement (et les comptes connus).
+  // NOTE: structure préparée pour basculer ultérieurement sur un backend
+  // sans toucher aux composants (signature des actions inchangée).
+  useEffect(() => {
+    try {
+      if (user) localStorage.setItem("tempo.session.user", JSON.stringify(user));
+      else localStorage.removeItem("tempo.session.user");
+    } catch { /* storage indisponible */ }
+  }, [user]);
+
+  const readAccounts = () => {
+    try { return JSON.parse(localStorage.getItem("tempo.accounts") || "[]"); }
+    catch { return []; }
+  };
+  const writeAccounts = (list) => {
+    try { localStorage.setItem("tempo.accounts", JSON.stringify(list)); }
+    catch { /* ignore */ }
+  };
+
   const handleSignup = () => {
-    if (!signupForm.firstName || !signupForm.lastName || !signupForm.birthDate || !signupForm.email) return;
-    setUser({
-      ...signupForm,
-      city: "",
-      photo: null,
-      bio: "",
-      trialStart: Date.now(),
-      isSubscribed: false,
+    setAuthError(null);
+    const { firstName, lastName, birthDate, email, password, confirmPassword } = signupForm;
+    if (!firstName || !lastName || !birthDate || !email || !password || !confirmPassword) {
+      setAuthError("Veuillez remplir tous les champs.");
+      return;
+    }
+    if (password.length < 6) {
+      setAuthError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAuthError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    const accounts = readAccounts();
+    if (accounts.some((a) => a.email.toLowerCase() === email.toLowerCase())) {
+      setAuthError("Un compte existe déjà avec cet email.");
+      return;
+    }
+    const newAccount = {
+      firstName, lastName, birthDate, email, password,
+      city: "", photo: null, bio: "",
+      trialStart: Date.now(), isSubscribed: false,
+    };
+    writeAccounts([...accounts, newAccount]);
+    // eslint-disable-next-line no-unused-vars
+    const { password: _pw, ...sessionUser } = newAccount;
+    setUser(sessionUser);
+    setSignupForm({
+      firstName: "", lastName: "", birthDate: "", email: "",
+      password: "", confirmPassword: "",
     });
-    setTutorialStep(0);
+  };
+
+  const handleLogin = () => {
+    setAuthError(null);
+    const { email, password } = loginForm;
+    if (!email || !password) {
+      setAuthError("Veuillez renseigner email et mot de passe.");
+      return;
+    }
+    const accounts = readAccounts();
+    const match = accounts.find(
+      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
+    );
+    if (!match) {
+      setAuthError("Identifiants incorrects.");
+      return;
+    }
+    // eslint-disable-next-line no-unused-vars
+    const { password: _pw, ...sessionUser } = match;
+    setUser(sessionUser);
+    setLoginForm({ email: "", password: "" });
+  };
+
+  // Architecture "mot de passe oublié" — pas d'envoi réel d'email pour
+  // l'instant ; on confirme uniquement que la demande est reçue.
+  // Quand un service mail sera branché, il suffira de remplacer ce corps.
+  const handleForgotPassword = () => {
+    setAuthError(null);
+    const { email } = forgotForm;
+    if (!email) {
+      setAuthError("Veuillez saisir votre email.");
+      return false;
+    }
+    // Toujours répondre la même chose (sécurité : ne pas révéler l'existence).
+    setForgotForm({ email: "" });
+    return true;
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setShowProfile(false);
+    setShowStats(false);
+    setShowPlanning(false);
+    setShowMenu(false);
+    setShowSubscription(false);
+    setShowCustomization(false);
+    setFocusMode(false);
+    setActiveMeditation(null);
+    setIsRunning(false);
+    setAuthMode("login");
+  };
+
+  // Modification du mot de passe depuis le profil.
+  const changePassword = () => {
+    setPasswordChangeMessage(null);
+    const { current, next, confirm } = passwordForm;
+    if (!current || !next || !confirm) {
+      setPasswordChangeMessage({ type: "error", text: "Veuillez remplir tous les champs." });
+      return;
+    }
+    if (next.length < 6) {
+      setPasswordChangeMessage({ type: "error", text: "Le nouveau mot de passe doit contenir au moins 6 caractères." });
+      return;
+    }
+    if (next !== confirm) {
+      setPasswordChangeMessage({ type: "error", text: "La confirmation ne correspond pas." });
+      return;
+    }
+    const accounts = readAccounts();
+    const idx = accounts.findIndex((a) => a.email.toLowerCase() === user.email.toLowerCase());
+    if (idx === -1) {
+      // Cas bêta / compte non persisté : on accepte en local pour ne pas bloquer.
+      setPasswordChangeMessage({ type: "success", text: "Mot de passe mis à jour." });
+      setPasswordForm({ current: "", next: "", confirm: "" });
+      return;
+    }
+    if (accounts[idx].password !== current) {
+      setPasswordChangeMessage({ type: "error", text: "Mot de passe actuel incorrect." });
+      return;
+    }
+    accounts[idx] = { ...accounts[idx], password: next };
+    writeAccounts(accounts);
+    setPasswordChangeMessage({ type: "success", text: "Mot de passe mis à jour." });
+    setPasswordForm({ current: "", next: "", confirm: "" });
   };
 
   const handleBetaBypass = () => {
@@ -354,7 +463,6 @@ export function FocusProvider({ children }) {
       trialStart: Date.now(),
       isSubscribed: false,
     });
-    setTutorialStep(0);
   };
 
   const activateSubscription = () => {
@@ -413,7 +521,7 @@ export function FocusProvider({ children }) {
     if (isFloatingForm) {
       if (!taskForm.name) return;
       const cat = TASK_CATEGORIES.find((c) => c.id === taskForm.category);
-      const taskColor = cat?.color || "#FB923C";
+      const taskColor = cat?.color || "#D9B36A";
       if (editingTask) {
         setFloatingTasks(
           floatingTasks.map((t) => (t.id === editingTask.id ? { ...t, ...taskForm, color: taskColor } : t)),
@@ -439,7 +547,7 @@ export function FocusProvider({ children }) {
       return;
     }
     const cat = TASK_CATEGORIES.find((c) => c.id === taskForm.category);
-    const taskColor = taskForm.customColor || cat?.color || "#A78BFA";
+    const taskColor = taskForm.customColor || cat?.color || "#D9B36A";
 
     // ===== EDITING =====
     if (editingTask) {
@@ -577,7 +685,7 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   const openNewTemplate = () => {
     setEditingTemplate(null);
-    setTemplateForm({ name: "", color: "#A78BFA", durationMin: 30, iconKey: "Zap" });
+    setTemplateForm({ name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
     setShowCustomTaskEditor(true);
   };
   const openEditTemplate = (tpl) => {
@@ -932,11 +1040,18 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   // Profile / photo upload
   // ────────────────────────────────────────────────────────────────────────
+  // Si un brouillon profil est ouvert, on met la photo dans le brouillon.
+  // Sinon (ex. clic depuis le dashboard) on l'écrit directement sur user
+  // pour qu'elle soit immédiatement visible et persistée.
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setProfileDraft((d) => ({ ...(d || user), photo: ev.target.result }));
+    reader.onload = (ev) => {
+      const photo = ev.target.result;
+      if (profileDraft) setProfileDraft({ ...profileDraft, photo });
+      else setUser((u) => (u ? { ...u, photo } : u));
+    };
     reader.readAsDataURL(file);
   };
 
@@ -997,18 +1112,28 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   const value = {
     // Auth
-    user, setUser, signupForm, setSignupForm, profileDraft, setProfileDraft,
-    paymentForm, setPaymentForm, handleSignup, handleBetaBypass, activateSubscription,
+    user, setUser,
+    signupForm, setSignupForm,
+    loginForm, setLoginForm,
+    forgotForm, setForgotForm,
+    authMode, setAuthMode,
+    authError, setAuthError,
+    profileDraft, setProfileDraft,
+    passwordForm, setPasswordForm,
+    passwordChangeMessage, setPasswordChangeMessage,
+    changePassword,
+    paymentForm, setPaymentForm,
+    handleSignup, handleLogin, handleForgotPassword, handleLogout,
+    handleBetaBypass, activateSubscription,
     trialDaysLeft, trialExpired,
 
     // Navigation
-    tutorialStep, setTutorialStep,
     showProfile, setShowProfile,
     showStats, setShowStats,
+    showPlanning, setShowPlanning,
     showMenu, setShowMenu,
     showSubscription, setShowSubscription,
     showCustomization, setShowCustomization,
-    showBrain, setShowBrain,
     focusMode, setFocusMode,
     activeMeditation, setActiveMeditation,
 
@@ -1044,12 +1169,6 @@ export function FocusProvider({ children }) {
     showCustomTaskEditor, setShowCustomTaskEditor,
     editingTemplate, templateForm, setTemplateForm,
     openNewTemplate, openEditTemplate, saveTemplate, deleteTemplate, insertTemplate,
-
-    // Brain
-    validatedDates, brainTotalDays, brainCurrentCycleIdx, brainDayInCycle,
-    brainCycleProgress, brainCurrentColor,
-    brainPreviewCycle, setBrainPreviewCycle,
-    brainNewNodeBurst, setBrainNewNodeBurst,
 
     // Day flow
     isRunning, demoMode, demoElapsed, now,

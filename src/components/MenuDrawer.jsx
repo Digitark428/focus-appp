@@ -1,5 +1,5 @@
 import {
-  BarChart3, Brain, LogOut, Palette, Pencil, Sparkles, Volume2, VolumeX,
+  BarChart3, LogOut, Palette, Pencil, Sparkles, Volume2, VolumeX,
 } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { CUSTOM_THEMES } from "../constants/days";
@@ -7,11 +7,11 @@ import { TEMPO, TEMPO_SHADOWS } from "../utils/tempoTheme";
 
 export default function MenuDrawer() {
   const {
-    showMenu, setShowMenu, user, setUser,
+    showMenu, setShowMenu, user, handleLogout,
     setShowProfile, setProfileDraft,
-    setShowBrain, setShowStats, setShowCustomization, setShowSubscription,
-    customTheme, brainTotalDays, brainCurrentColor,
-    trialDaysLeft, voiceOn, toggleVoice, setTutorialStep,
+    setShowStats, setShowCustomization, setShowSubscription,
+    customTheme,
+    trialDaysLeft, voiceOn, toggleVoice,
   } = useFocus();
 
   if (!showMenu) return null;
@@ -59,22 +59,6 @@ export default function MenuDrawer() {
         </button>
 
         <div className="h-px my-2" style={{ background: TEMPO.border }} />
-
-        <button
-          onClick={() => { setShowMenu(false); setShowBrain(true); }}
-          className={itemCls}
-        >
-          <Brain size={15} style={{ color: brainCurrentColor }} />
-          <span className="text-sm flex-1" style={{ color: TEMPO.text }}>Mon cerveau</span>
-          {brainTotalDays > 0 && (
-            <span
-              className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full"
-              style={{ background: brainCurrentColor + "20", color: brainCurrentColor }}
-            >
-              {brainTotalDays}j
-            </span>
-          )}
-        </button>
 
         <button onClick={() => { setShowMenu(false); setShowStats(true); }} className={itemCls}>
           <BarChart3 size={15} style={{ color: TEMPO.textDim }} />
@@ -138,15 +122,10 @@ export default function MenuDrawer() {
           </span>
         </button>
 
-        <button onClick={() => { setShowMenu(false); setTutorialStep(0); }} className={itemCls}>
-          <Sparkles size={15} style={{ color: TEMPO.textDim }} />
-          <span className="text-sm" style={{ color: TEMPO.text }}>Revoir le tutoriel</span>
-        </button>
-
         <div className="h-px my-2" style={{ background: TEMPO.border }} />
 
         <button
-          onClick={() => { setShowMenu(false); setUser(null); }}
+          onClick={() => { setShowMenu(false); handleLogout(); }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition text-left"
           style={{ color: "#F87171cc" }}
         >

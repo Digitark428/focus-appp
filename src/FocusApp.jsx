@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { FocusProvider, useFocus } from "./context/FocusContext";
-import BrainScreen from "./screens/BrainScreen";
 import CustomizationScreen from "./screens/CustomizationScreen";
 import FocusModeScreen from "./screens/FocusModeScreen";
 import MainScreen from "./screens/MainScreen";
 import MeditationScreen from "./screens/MeditationScreen";
+import PlanningScreen from "./screens/PlanningScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import SignupScreen from "./screens/SignupScreen";
 import SplashScreen from "./screens/SplashScreen";
@@ -14,15 +14,19 @@ import BottomNav from "./components/BottomNav";
 
 // ───────────────────────────────────────────────────────────────
 //  Router conditionnel.
-//  Ordre : Splash → Signup → Subscription → Focus → Meditation
-//          → Stats / Profile / Brain / Customization → Main.
-//  La BottomNav n'apparaît qu'une fois l'utilisateur connecté
-//  (et masquée pendant Splash / Signup / Subscription).
+//
+//  Ordre : Splash (au tout premier rendu) → (si non connecté)
+//  SignupScreen → Subscription → Focus → Meditation → Stats /
+//  Planning / Profile / Customization → Main.
+//
+//  Si l'utilisateur a une session restaurée depuis localStorage,
+//  on saute l'écran d'inscription/connexion et on arrive
+//  directement dans l'application.
 // ───────────────────────────────────────────────────────────────
 function Router() {
   const {
     user, trialExpired, showSubscription, focusMode, activeMeditation,
-    showStats, showProfile, showBrain, showCustomization,
+    showStats, showPlanning, showProfile, showCustomization,
   } = useFocus();
 
   if (!user) return <SignupScreen />;
@@ -30,8 +34,8 @@ function Router() {
   if (focusMode) return <FocusModeScreen />;
   if (activeMeditation) return <MeditationScreen />;
   if (showStats) return <StatsScreen />;
+  if (showPlanning) return <PlanningScreen />;
   if (showProfile) return <ProfileScreen />;
-  if (showBrain) return <BrainScreen />;
   if (showCustomization) return <CustomizationScreen />;
   return <MainScreen />;
 }

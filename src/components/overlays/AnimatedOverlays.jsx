@@ -1,7 +1,6 @@
-import { Check, ChevronRight } from "lucide-react";
+import { Check } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TASK_CATEGORIES } from "../../constants/tasks";
-import { BRAIN_CYCLE_DAYS } from "../../constants/brain";
 import { TEMPO } from "../../utils/tempoTheme";
 
 export function ValidationBurst() {
@@ -219,46 +218,6 @@ export function SwapToast() {
           <span className="ml-1.5" style={{ color: TEMPO.textDim }}>échangées</span>
         </p>
       </div>
-    </div>
-  );
-}
-
-export function BrainNewNodeBurst() {
-  const {
-    brainNewNodeBurst, setBrainNewNodeBurst, setShowBrain,
-    brainCurrentColor, brainDayInCycle, brainCurrentCycleIdx,
-  } = useFocus();
-  if (!brainNewNodeBurst) return null;
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[95] flex items-end justify-center pb-32 sm:pb-40">
-      <button
-        onClick={() => { setBrainNewNodeBurst(null); setShowBrain(true); }}
-        className="pointer-events-auto rounded-2xl border px-5 py-4 backdrop-blur-md flex items-center gap-3"
-        style={{
-          background: `linear-gradient(135deg, ${brainCurrentColor}25 0%, rgba(11,29,58,0.95) 100%)`,
-          borderColor: brainCurrentColor + "60",
-          boxShadow: `0 20px 60px ${brainCurrentColor}40, 0 0 40px ${brainCurrentColor}30`,
-          animation: "burst-fade 2.4s ease-out forwards",
-        }}
-      >
-        <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-          <div className="absolute inset-0 rounded-full animate-ping opacity-50" style={{ background: brainCurrentColor }} />
-          <div
-            className="relative w-5 h-5 rounded-full"
-            style={{ background: brainCurrentColor, boxShadow: `0 0 16px ${brainCurrentColor}` }}
-          />
-        </div>
-        <div className="text-left">
-          <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: brainCurrentColor }}>
-            Nouvelle connexion
-          </p>
-          <p className="text-sm font-medium" style={{ color: TEMPO.text }}>
-            Jour {brainDayInCycle}/{BRAIN_CYCLE_DAYS} · Cycle {brainCurrentCycleIdx + 1}
-          </p>
-        </div>
-        <ChevronRight size={14} className="shrink-0" style={{ color: TEMPO.textDim }} />
-      </button>
     </div>
   );
 }

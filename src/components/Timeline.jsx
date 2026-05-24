@@ -1,7 +1,7 @@
 import { Plus, Sparkles } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
-import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
+import { TEMPO } from "../utils/tempoTheme";
 import PauseTaskCard from "./PauseTaskCard";
 import TaskCard from "./TaskCard";
 
@@ -10,30 +10,13 @@ export default function Timeline() {
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h3 className="text-[10px] uppercase tracking-[0.22em]" style={{ color: TEMPO.textDim }}>
           Timeline · {dayTheme.name}
         </h3>
-        <button
-          onClick={openAdd}
-          data-tour="addBtn"
-          className="relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition hover:scale-[1.05] active:scale-95"
-          style={{
-            background: TEMPO_GRADIENTS.gold,
-            color: "#1A1206",
-            boxShadow: TEMPO_SHADOWS.gold,
-          }}
-        >
-          <span
-            className="absolute inset-x-0 top-0 h-1/2 rounded-full pointer-events-none"
-            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, transparent 100%)" }}
-          />
-          <Plus size={15} strokeWidth={2.8} className="relative z-10" />
-          <span className="relative z-10 tracking-wide">Ajouter</span>
-        </button>
       </div>
 
-      <div data-tour="timeline">
+      <div>
         {sortedTasks.length === 0 ? (
           <div
             className="rounded-2xl border border-dashed p-10 text-center"

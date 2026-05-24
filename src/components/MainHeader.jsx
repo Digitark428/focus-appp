@@ -4,7 +4,7 @@ import { TempoLogoMini } from "./TempoLogo";
 import { TEMPO } from "../utils/tempoTheme";
 
 export default function MainHeader() {
-  const { user, now, dayTheme, setShowMenu, handleLogoTap } = useFocus();
+  const { user, now, setShowMenu, handleLogoTap, handlePhotoUpload } = useFocus();
 
   const hour = now.getHours();
   const greeting = hour < 5 ? "Bonne nuit" : hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
@@ -35,18 +35,14 @@ export default function MainHeader() {
         </div>
       </button>
 
-      <button
-        onClick={() => setShowMenu(true)}
-        data-tour="menu"
-        className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full backdrop-blur transition hover:scale-[1.03]"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          border: `1px solid ${TEMPO.border}`,
-        }}
-      >
-        <div
-          className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium"
+      <div className="flex items-center gap-2">
+        {/* Photo de profil cliquable — upload direct depuis le dashboard.
+            Stop propagation pour ne pas ouvrir le menu. */}
+        <label
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-pointer w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium transition hover:scale-[1.05]"
           style={{ background: TEMPO.gold + "25", border: `1px solid ${TEMPO.gold}40` }}
+          title="Modifier ma photo"
         >
           {user.photo ? (
             <img src={user.photo} alt="" className="w-full h-full object-cover" />
@@ -55,9 +51,20 @@ export default function MainHeader() {
               {user.firstName?.[0]}{user.lastName?.[0]}
             </span>
           )}
-        </div>
-        <ChevronDown size={12} style={{ color: TEMPO.textDim }} />
-      </button>
+          <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+        </label>
+
+        <button
+          onClick={() => setShowMenu(true)}
+          className="flex items-center gap-1 pl-2 pr-2.5 py-1.5 rounded-full backdrop-blur transition hover:scale-[1.03]"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid ${TEMPO.border}`,
+          }}
+        >
+          <ChevronDown size={12} style={{ color: TEMPO.textDim }} />
+        </button>
+      </div>
     </header>
   );
 }

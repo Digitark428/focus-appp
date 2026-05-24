@@ -6,40 +6,43 @@ export default function BottomNav() {
   const {
     showStats, setShowStats,
     showProfile, setShowProfile,
+    showPlanning, setShowPlanning,
     setProfileDraft, user,
     setShowAdd, setEditingTask, setIsFloatingForm,
-    focusMode, activeMeditation, showBrain, showCustomization,
+    focusMode, activeMeditation, showCustomization,
     showSubscription,
   } = useFocus();
 
   // Hide on non-main screens (full screen replacements)
-  const isHidden = focusMode || activeMeditation || showBrain || showCustomization || showSubscription;
+  const isHidden = focusMode || activeMeditation || showCustomization || showSubscription;
   if (isHidden) return null;
 
   const isStats = showStats;
   const isProfile = showProfile;
-  const isDashboard = !showStats && !showProfile;
+  const isPlanning = showPlanning;
+  const isDashboard = !showStats && !showProfile && !showPlanning;
+
+  // Helper: navigate to a single primary screen (mutually exclusive)
+  const goTo = (target) => {
+    setShowStats(target === "stats");
+    setShowProfile(target === "profile");
+    setShowPlanning(target === "planning");
+  };
 
   const navItems = [
     {
       id: "dashboard",
       icon: Home,
       label: "Accueil",
-      active: isDashboard && !isStats && !isProfile,
-      onPress: () => {
-        setShowStats(false);
-        if (showProfile) setShowProfile(false);
-      },
+      active: isDashboard,
+      onPress: () => goTo("dashboard"),
     },
     {
       id: "planning",
       icon: CalendarDays,
       label: "Planning",
-      active: false,
-      onPress: () => {
-        setShowStats(false);
-        if (showProfile) setShowProfile(false);
-      },
+      active: isPlanning,
+      onPress: () => goTo("planning"),
     },
     { id: "add", icon: Plus, label: "", active: false, isCTA: true },
     {
@@ -47,10 +50,7 @@ export default function BottomNav() {
       icon: BarChart3,
       label: "Stats",
       active: isStats,
-      onPress: () => {
-        setShowStats(true);
-        if (showProfile) setShowProfile(false);
-      },
+      onPress: () => goTo("stats"),
     },
     {
       id: "profile",
@@ -59,8 +59,7 @@ export default function BottomNav() {
       active: isProfile,
       onPress: () => {
         setProfileDraft(user);
-        setShowProfile(true);
-        setShowStats(false);
+        goTo("profile");
       },
     },
   ];
@@ -68,8 +67,7 @@ export default function BottomNav() {
   const handleAdd = () => {
     setEditingTask(null);
     setIsFloatingForm(false);
-    setShowStats(false);
-    if (showProfile) setShowProfile(false);
+    goTo("dashboard");
     setShowAdd(true);
   };
 
