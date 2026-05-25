@@ -1,5 +1,3 @@
-import { useAmbientAudio } from "../hooks/useAmbientAudio";
-import { useCustomAudio } from "../hooks/useCustomAudio";
 import { useFocus } from "../context/FocusContext";
 import { TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
@@ -40,10 +38,7 @@ import {
 //  des tâches, démarrage de la journée, modaux d'édition.
 // ============================================================
 export default function MainScreen() {
-  const { activeAmbient, ambientVolume, activeCustomTrack, customTracks, isRunning } = useFocus();
-
-  useAmbientAudio(activeAmbient, ambientVolume);
-  useCustomAudio(activeCustomTrack, customTracks, ambientVolume);
+  const { isRunning } = useFocus();
 
   return (
     <div

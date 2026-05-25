@@ -54,12 +54,11 @@ export function TaskTransition() {
   if (!taskTransition) return null;
 
   return (
-    <div className="fixed inset-0 z-[88] flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none">
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 backdrop-blur-md"
         style={{
-          background: "radial-gradient(circle at center, rgba(7,19,38,0.6) 0%, rgba(7,19,38,0.92) 80%)",
-          animation: "burst-fade 5s ease-out forwards",
+          background: "radial-gradient(circle at center, rgba(7,19,38,0.94) 0%, rgba(4,12,28,0.98) 80%)",
         }}
       />
       <div

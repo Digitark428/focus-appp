@@ -40,8 +40,12 @@ export default function MainHeader() {
             Stop propagation pour ne pas ouvrir le menu. */}
         <label
           onClick={(e) => e.stopPropagation()}
-          className="cursor-pointer w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium transition hover:scale-[1.05]"
-          style={{ background: TEMPO.gold + "25", border: `1px solid ${TEMPO.gold}40` }}
+          className="cursor-pointer w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium transition hover:scale-[1.05]"
+          style={{
+            background: TEMPO.gold + "25",
+            border: `1px solid ${TEMPO.gold}55`,
+            boxShadow: `0 4px 16px ${TEMPO.gold}25`,
+          }}
           title="Modifier ma photo"
         >
           {user.photo ? (

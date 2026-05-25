@@ -1,13 +1,12 @@
 import { X } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { formatTime } from "../utils/time";
-import { AMBIENT_SOUNDS } from "../constants/tasks";
 import { TEMPO, TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
 export default function FocusModeScreen() {
   const {
     setFocusMode, currentTask, nextTask, progress, remainingSec,
-    activeAmbient, activeCustomTrack, customTracks,
+    activeCustomTrack, customTracks,
   } = useFocus();
 
   const bigRadius = 160;
@@ -15,11 +14,9 @@ export default function FocusModeScreen() {
   const bigOffset = bigCircumference - (progress / 100) * bigCircumference;
   const accent = currentTask?.color || TEMPO.gold;
 
-  const activeSound = activeAmbient
-    ? AMBIENT_SOUNDS.find((s) => s.id === activeAmbient)?.name
-    : activeCustomTrack
-      ? customTracks.find((t) => t.id === activeCustomTrack)?.name
-      : null;
+  const activeSound = activeCustomTrack
+    ? customTracks.find((t) => t.id === activeCustomTrack)?.name
+    : null;
 
   return (
     <div

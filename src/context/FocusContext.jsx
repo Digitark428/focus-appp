@@ -1093,6 +1093,43 @@ export function FocusProvider({ children }) {
     setTimeout(() => setTaskTransition(null), 5000);
   };
 
+  // Pull remaining tasks earlier when current task is finished/skipped before its
+  // scheduled end. Only when triggered manually (kind === "manual") and only if
+  // the next un-completed task is scheduled to start after `now`. Preserves each
+  // task's duration; shifts start/end of completed + all subsequent tasks by the
+  // same negative offset so the next one starts immediately at `now`.
+  const pullUpcomingForEarlyFinish = (endedTaskId) => {
+    if (popupTriggerKindRef.current !== "manual") return;
+    const sorted = [...tasks].sort((a, b) => toMin(a.start) - toMin(b.start));
+    const idx = sorted.findIndex((t) => t.id === endedTaskId);
+    if (idx === -1) return;
+    const completionsNow = dayCompletionsRef.current || {};
+    const nextUpcoming = sorted
+      .slice(idx + 1)
+      .find((t) => completionsNow[t.id] !== "done" && completionsNow[t.id] !== "skipped");
+    if (!nextUpcoming) return;
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+    const nextStart = toMin(nextUpcoming.start);
+    if (nextStart <= nowMin) return;
+    const offset = nextStart - nowMin;
+    if (offset <= 0) return;
+    const updated = sorted.map((t) => {
+      if (t.id === endedTaskId) {
+        return { ...t, end: fromMin(Math.max(toMin(t.start), toMin(t.end) - offset)) };
+      }
+      if (toMin(t.start) >= nextStart) {
+        return {
+          ...t,
+          start: fromMin(toMin(t.start) - offset),
+          end: fromMin(toMin(t.end) - offset),
+        };
+      }
+      return t;
+    });
+    setTasks(updated);
+    sorted.slice(idx + 1).forEach((t) => lastEndedRef.current.delete(t.id));
+  };
+
   const markTaskDone = (taskId) => {
     setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [taskId]: "done" } });
     const task = tasks.find((t) => t.id === taskId);
@@ -1101,6 +1138,7 @@ export function FocusProvider({ children }) {
       setTimeout(() => setValidationBurst(null), 1800);
     }
     shiftUpcomingByResponseDelay(taskId);
+    pullUpcomingForEarlyFinish(taskId);
     setEndTaskPopup(null);
     setShowExtendChoice(false);
     setTimeout(() => triggerTaskTransition(taskId), 1900);
@@ -1109,6 +1147,7 @@ export function FocusProvider({ children }) {
   const markTaskSkipped = (taskId) => {
     setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [taskId]: "skipped" } });
     shiftUpcomingByResponseDelay(taskId);
+    pullUpcomingForEarlyFinish(taskId);
     setEndTaskPopup(null);
     setShowExtendChoice(false);
     setTimeout(() => triggerTaskTransition(taskId), 400);

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { FocusProvider, useFocus } from "./context/FocusContext";
+import { useAmbientAudio } from "./hooks/useAmbientAudio";
+import { useCustomAudio } from "./hooks/useCustomAudio";
 import CustomizationScreen from "./screens/CustomizationScreen";
 import FocusModeScreen from "./screens/FocusModeScreen";
 import MainScreen from "./screens/MainScreen";
@@ -12,6 +14,14 @@ import StatsScreen from "./screens/StatsScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
 import BottomNav from "./components/BottomNav";
 import ErrorBoundary from "./components/ErrorBoundary";
+
+// Mounted once at root: keeps custom music playing across screen changes.
+function GlobalAudioController() {
+  const { activeAmbient, ambientVolume, activeCustomTrack, customTracks } = useFocus();
+  useAmbientAudio(activeAmbient, ambientVolume);
+  useCustomAudio(activeCustomTrack, customTracks, ambientVolume);
+  return null;
+}
 
 // ───────────────────────────────────────────────────────────────
 //  Router conditionnel.
@@ -58,6 +68,7 @@ export default function FocusApp() {
   return (
     <ErrorBoundary>
       <FocusProvider>
+        <GlobalAudioController />
         <Router />
         <BottomNavGate />
       </FocusProvider>
