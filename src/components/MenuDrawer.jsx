@@ -1,5 +1,5 @@
 import {
-  BarChart3, LogOut, Palette, Pencil, Sparkles, Volume2, VolumeX,
+  BarChart3, Bell, BellOff, LogOut, Palette, Pencil, Sparkles, Volume2, VolumeX,
 } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { CUSTOM_THEMES } from "../constants/days";
@@ -12,6 +12,7 @@ export default function MenuDrawer() {
     setShowStats, setShowCustomization, setShowSubscription,
     customTheme,
     trialDaysLeft, voiceOn, toggleVoice,
+    notificationsEnabled, notificationPermissionState, toggleNotifications,
   } = useFocus();
 
   if (!showMenu) return null;
@@ -119,6 +120,31 @@ export default function MenuDrawer() {
             style={{ color: voiceOn ? TEMPO.gold : TEMPO.textDim }}
           >
             {voiceOn ? "ON" : "OFF"}
+          </span>
+        </button>
+
+        <button onClick={toggleNotifications} className={itemCls}>
+          {notificationsEnabled
+            ? <Bell size={15} style={{ color: TEMPO.textDim }} />
+            : <BellOff size={15} style={{ color: TEMPO.textDim }} />}
+          <span className="text-sm flex-1" style={{ color: TEMPO.text }}>
+            Notifications
+            {notificationPermissionState === "denied" && (
+              <span className="block text-[10px]" style={{ color: TEMPO.textDim }}>
+                Refusées — autorise-les dans iOS
+              </span>
+            )}
+            {notificationPermissionState === "unsupported" && (
+              <span className="block text-[10px]" style={{ color: TEMPO.textDim }}>
+                Installer sur écran d'accueil
+              </span>
+            )}
+          </span>
+          <span
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: notificationsEnabled ? TEMPO.gold : TEMPO.textDim }}
+          >
+            {notificationsEnabled ? "ON" : "OFF"}
           </span>
         </button>
 

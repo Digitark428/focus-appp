@@ -136,6 +136,13 @@ export function FocusProvider({ children }) {
   const [customTracks, setCustomTracks] = useState([]);
   const [activeCustomTrack, setActiveCustomTrack] = useState(null);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    try { return localStorage.getItem("tempo_notif_enabled") === "1"; } catch { return false; }
+  });
+  const [notificationPermissionState, setNotificationPermissionState] = useState(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
+    return Notification.permission;
+  });
 
   // ── Refs ────────────────────────────────────────────────────────────────
   const notifiedRef = useRef(new Set());
@@ -195,22 +202,29 @@ export function FocusProvider({ children }) {
       nextTask = sortedTasks[idx + 1];
     }
   } else {
+    const isToday = selectedDay === todayIndex();
     const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-    currentTask = sortedTasks.find(
-      (t) => nowMin >= toMin(t.start) && nowMin < toMin(t.end) && !dayCompletions[t.id],
-    );
-    if (currentTask) {
-      const start = toMin(currentTask.start);
-      const end = toMin(currentTask.end);
-      progress = ((nowMin - start) / (end - start)) * 100;
-      remainingSec = Math.max(0, Math.floor((end - nowMin) * 60));
-    }
-    const currentIdx = currentTask ? sortedTasks.indexOf(currentTask) : -1;
-    if (currentIdx >= 0) {
-      nextTask = sortedTasks.slice(currentIdx + 1).find((t) => !dayCompletions[t.id]);
+    if (isToday) {
+      currentTask = sortedTasks.find(
+        (t) => nowMin >= toMin(t.start) && nowMin < toMin(t.end) && !dayCompletions[t.id],
+      );
+      if (currentTask) {
+        const start = toMin(currentTask.start);
+        const end = toMin(currentTask.end);
+        progress = ((nowMin - start) / (end - start)) * 100;
+        remainingSec = Math.max(0, Math.floor((end - nowMin) * 60));
+      }
+      const currentIdx = currentTask ? sortedTasks.indexOf(currentTask) : -1;
+      if (currentIdx >= 0) {
+        nextTask = sortedTasks.slice(currentIdx + 1).find((t) => !dayCompletions[t.id]);
+      } else {
+        nextTask = sortedTasks.find((t) => toMin(t.start) > nowMin && !dayCompletions[t.id])
+          || sortedTasks.find((t) => !dayCompletions[t.id] && toMin(t.end) > nowMin);
+      }
     } else {
-      nextTask = sortedTasks.find((t) => toMin(t.start) > nowMin && !dayCompletions[t.id])
-        || sortedTasks.find((t) => !dayCompletions[t.id] && toMin(t.end) > nowMin);
+      // Day being viewed is not today → no live "current" task. Just expose
+      // the first un-completed task as the "next" entry for previews.
+      nextTask = sortedTasks.find((t) => !dayCompletions[t.id]) || null;
     }
   }
 
@@ -225,6 +239,9 @@ export function FocusProvider({ children }) {
       if (demoElapsed <= taskStart) return 0;
       return ((demoElapsed - taskStart) / DEMO_TASK_DURATION) * 100;
     }
+    // Time-based progress only applies to today's view. Future/past days
+    // remain at 0% unless explicitly marked completed.
+    if (selectedDay !== todayIndex()) return 0;
     const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     const start = toMin(task.start);
     const end = toMin(task.end);
@@ -1389,6 +1406,36 @@ export function FocusProvider({ children }) {
   // Voice toggle (for menu).
   const toggleVoice = () => setVoiceOn((v) => !v);
 
+  // ── Notifications ────────────────────────────────────────────────────────
+  const enableNotifications = async () => {
+    const { requestNotificationPermission, registerServiceWorker } = await import(
+      "../services/notifications"
+    );
+    await registerServiceWorker();
+    const perm = await requestNotificationPermission();
+    setNotificationPermissionState(perm);
+    if (perm === "granted") {
+      setNotificationsEnabled(true);
+      try { localStorage.setItem("tempo_notif_enabled", "1"); } catch {}
+    } else {
+      setNotificationsEnabled(false);
+      try { localStorage.setItem("tempo_notif_enabled", "0"); } catch {}
+    }
+    return perm;
+  };
+
+  const disableNotifications = async () => {
+    setNotificationsEnabled(false);
+    try { localStorage.setItem("tempo_notif_enabled", "0"); } catch {}
+    const { cancelScheduledNotifications } = await import("../services/notifications");
+    await cancelScheduledNotifications();
+  };
+
+  const toggleNotifications = async () => {
+    if (notificationsEnabled) return disableNotifications();
+    return enableNotifications();
+  };
+
   // ────────────────────────────────────────────────────────────────────────
   // Public context value
   // ────────────────────────────────────────────────────────────────────────
@@ -1490,6 +1537,10 @@ export function FocusProvider({ children }) {
     activateAmbient, activateCustom,
     handleMusicUpload, removeCustomTrack,
     voiceOn, toggleVoice,
+
+    // Notifications
+    notificationsEnabled, notificationPermissionState,
+    enableNotifications, disableNotifications, toggleNotifications,
 
     // Profile
     handlePhotoUpload,
