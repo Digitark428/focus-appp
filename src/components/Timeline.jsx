@@ -77,6 +77,7 @@ export default function Timeline() {
             </div>
 
             {sortedTasks.map((task) => {
+              if (!task || !task.id) return null;
               const cat = task.category ? TASK_CATEGORIES.find((c) => c.id === task.category) : null;
               if (cat?.isPause) return <PauseTaskCard key={task.id} task={task} />;
               return <TaskCard key={task.id} task={task} />;

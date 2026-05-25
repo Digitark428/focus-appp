@@ -11,6 +11,7 @@ import SplashScreen from "./screens/SplashScreen";
 import StatsScreen from "./screens/StatsScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
 import BottomNav from "./components/BottomNav";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // ───────────────────────────────────────────────────────────────
 //  Router conditionnel.
@@ -55,9 +56,11 @@ export default function FocusApp() {
   }
 
   return (
-    <FocusProvider>
-      <Router />
-      <BottomNavGate />
-    </FocusProvider>
+    <ErrorBoundary>
+      <FocusProvider>
+        <Router />
+        <BottomNavGate />
+      </FocusProvider>
+    </ErrorBoundary>
   );
 }

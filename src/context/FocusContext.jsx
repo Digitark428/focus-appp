@@ -23,6 +23,7 @@ export const useFocus = () => {
 const DEMO_TASK_DURATION = 30; // seconds per task in demo mode
 const TRIAL_DAYS = 7;
 const LONG_PRESS_MS = 350;
+const TEMPO_FALLBACK_COLOR = "#D9B36A";
 
 export function FocusProvider({ children }) {
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -270,19 +271,24 @@ export function FocusProvider({ children }) {
   }, [remainingSec, currentTask, isRunning, voiceOn, demoMode]);
 
   // Detect when a task hits 100% — open the validation popup.
+  // On n'écrase JAMAIS un popup déjà ouvert : la prochaine tâche
+  // sera proposée naturellement après validation de la précédente.
   useEffect(() => {
     if (!isRunning) return;
-    sortedTasks.forEach((task) => {
+    if (endTaskPopup) return; // un popup est déjà ouvert
+    for (const task of sortedTasks) {
+      if (!task || !task.id) continue;
       const prog = getTaskProgress(task);
       if (prog >= 100 && !lastEndedRef.current.has(task.id) && !dayCompletions[task.id]) {
         lastEndedRef.current.add(task.id);
         popupOpenedAtRef.current = Date.now();
         popupTriggerKindRef.current = "natural";
         setEndTaskPopup(task);
+        break; // un seul popup à la fois
       }
-    });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [now, demoElapsed, isRunning]);
+  }, [now, demoElapsed, isRunning, endTaskPopup]);
 
   // Detect end of day → show summary popup.
   useEffect(() => {
@@ -1057,21 +1063,32 @@ export function FocusProvider({ children }) {
   };
 
   // Briefly show a transition overlay between two tasks.
+  // IMPORTANT: lit le state frais via les refs pour éviter les
+  // closures stales (cas particulier des tâches custom → prédéfinies).
+  const tasksRef = useRef(tasks);
+  const dayCompletionsRef = useRef(dayCompletions);
+  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
+  useEffect(() => { dayCompletionsRef.current = dayCompletions; }, [dayCompletions]);
+
   const triggerTaskTransition = (completedTaskId, computedTasks = null) => {
-    const taskList = computedTasks || tasks;
-    const completedTask = taskList.find((t) => t.id === completedTaskId);
-    if (!completedTask) return;
+    const taskList = computedTasks || tasksRef.current || [];
+    const completed = taskList.find((t) => t && t.id === completedTaskId);
+    if (!completed) return;
+
+    const completionsNow = dayCompletionsRef.current || {};
     const upcoming = [...taskList]
+      .filter((t) => t && t.start && t.end)
       .sort((a, b) => toMin(a.start) - toMin(b.start))
-      .filter((t) => t.id !== completedTaskId && !dayCompletions[t.id]);
+      .filter((t) => t.id !== completedTaskId && completionsNow[t.id] !== "done" && completionsNow[t.id] !== "skipped");
     const nextOne = upcoming[0];
     if (!nextOne) return;
+
     setTaskTransition({
-      fromName: completedTask.name,
-      fromColor: completedTask.color,
-      toName: nextOne.name,
-      toColor: nextOne.color,
-      toStart: nextOne.start,
+      fromName: completed.name || "",
+      fromColor: completed.color || TEMPO_FALLBACK_COLOR,
+      toName: nextOne.name || "",
+      toColor: nextOne.color || TEMPO_FALLBACK_COLOR,
+      toStart: nextOne.start || "",
     });
     setTimeout(() => setTaskTransition(null), 5000);
   };

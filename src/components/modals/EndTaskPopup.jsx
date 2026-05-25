@@ -16,10 +16,10 @@ export default function EndTaskPopup() {
   if (!endTaskPopup) return null;
 
   const isInProgress = currentTask?.id === endTaskPopup.id;
-  const accent = endTaskPopup.color;
+  const accent = endTaskPopup.color || "#D9B36A";
 
   let minutesSaved = 0;
-  if (isInProgress) {
+  if (isInProgress && endTaskPopup.end && endTaskPopup.start) {
     const taskEnd = toMin(endTaskPopup.end);
     let nowMinutes;
     if (demoMode) {

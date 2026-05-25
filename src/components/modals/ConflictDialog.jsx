@@ -9,13 +9,17 @@ export default function ConflictDialog() {
 
   return (
     <div
-      className="fixed inset-0 z-[88] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
-      style={{ background: "rgba(7,19,38,0.85)" }}
+      className="fixed inset-0 z-[210] flex items-end sm:items-center justify-center p-4 backdrop-blur-md overflow-y-auto"
+      style={{
+        background: "rgba(7,19,38,0.85)",
+        paddingBottom: "max(1rem, calc(env(safe-area-inset-bottom) + 7rem))",
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+      }}
       onClick={() => closable && setConflictDialog(null)}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="rounded-3xl p-6 w-full max-w-sm"
+        className="rounded-3xl p-6 w-full max-w-sm max-h-[85vh] overflow-y-auto"
         style={{
           background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
           border: `1px solid rgba(248,113,113,0.5)`,
