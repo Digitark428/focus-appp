@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TASK_CATEGORIES } from "../../constants/tasks";
 import { TEMPO } from "../../utils/tempoTheme";
