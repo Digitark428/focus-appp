@@ -50,7 +50,7 @@ export default function ProfileScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-32">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}>
         <header className="flex items-center justify-between mb-8">
           <button
             onClick={closeWithoutSaving}

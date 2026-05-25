@@ -23,7 +23,7 @@ export default function CustomTaskTemplateEditor() {
 
   return (
     <div
-      className="fixed inset-0 z-[65] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[95] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
       style={{ background: "rgba(7,19,38,0.8)" }}
       onClick={() => setShowCustomTaskEditor(false)}
     >

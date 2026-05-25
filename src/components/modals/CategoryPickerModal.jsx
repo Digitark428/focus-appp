@@ -1,44 +1,71 @@
-import { ChevronLeft, ChevronRight, Moon, Pencil, Plus, Sparkles, Trash2, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Moon, Pencil, Plus, Sparkles, Trash2, X, Zap } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { CUSTOM_TASK_ICONS, TASK_CATEGORIES } from "../../constants/tasks";
 import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
+// ============================================================
+//  CategoryPickerModal
+//
+//  Étape de sélection catégorie → sous-catégorie. Utilisé
+//  uniquement dans le flow "predefined".
+//
+//  - Sélection d'une sous-catégorie ⇒ ferme le picker et ouvre
+//    le AddEditTaskModal pré-rempli (via applyPredefinedSelection).
+//  - Fermeture (croix / backdrop) ⇒ closeAddFlow() complet pour
+//    éviter qu'un picker orphelin reste accessible.
+//  - Les templates "Mes tâches" déclenchent insertTemplate qui
+//    bascule en flow custom avec pré-remplissage.
+// ============================================================
 export default function CategoryPickerModal() {
   const {
-    showCategoryPicker, setShowCategoryPicker,
+    showCategoryPicker, addFlowMode,
     pickerStep, setPickerStep,
     pickedCategory, setPickedCategory,
     customTaskTemplates, openNewTemplate, openEditTemplate, deleteTemplate, insertTemplate,
-    taskForm, setTaskForm,
+    applyPredefinedSelection, closeAddFlow,
   } = useFocus();
 
-  if (!showCategoryPicker) return null;
-
-  const close = () => {
-    setShowCategoryPicker(false);
-    setPickedCategory(null);
-    setPickerStep("category");
-  };
+  // Affichage strictement contrôlé : visible uniquement en flow predefined
+  // et quand showCategoryPicker est explicitement true.
+  if (!showCategoryPicker || addFlowMode !== "predefined") return null;
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
-      style={{ background: "rgba(7,19,38,0.8)" }}
-      onClick={close}
+      className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center backdrop-blur-sm overflow-y-auto"
+      style={{
+        background: "rgba(7,19,38,0.85)",
+        paddingTop: "max(16px, env(safe-area-inset-top))",
+        paddingBottom: "max(120px, calc(env(safe-area-inset-bottom) + 120px))",
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
+      onClick={closeAddFlow}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="rounded-3xl p-6 w-full max-w-sm max-h-[85vh] overflow-y-auto"
+        className="rounded-3xl p-6 w-full max-w-sm my-auto relative"
         style={{
           background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
           border: `1px solid ${TEMPO.borderStrong}`,
           boxShadow: TEMPO_SHADOWS.cardHi,
+          maxHeight: "calc(100dvh - 160px)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
+        <button
+          onClick={closeAddFlow}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition hover:bg-white/5"
+          style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${TEMPO.border}` }}
+          aria-label="Fermer"
+        >
+          <X size={14} style={{ color: TEMPO.textDim }} />
+        </button>
+
         {pickerStep === "category" ? (
           <>
-            {/* === MES TÂCHES === */}
-            <div className="mb-5">
+            {/* === MES TÂCHES (templates) === */}
+            <div className="mb-5 pr-8">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div
@@ -198,12 +225,12 @@ export default function CategoryPickerModal() {
             >
               <ChevronLeft size={14} /> Retour aux catégories
             </button>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 pr-8">
               {(() => {
                 const Icon = pickedCategory.icon;
                 return <Icon size={16} style={{ color: pickedCategory.color }} />;
               })()}
-              <h3 className="text-lg font-light" style={{ color: TEMPO.text }}>{pickedCategory.name}</h3>
+              <h3 className="text-lg font-light truncate" style={{ color: TEMPO.text }}>{pickedCategory.name}</h3>
             </div>
             <p className="text-xs mb-5" style={{ color: TEMPO.textDim }}>Choisis une activité</p>
             <div className="grid grid-cols-2 gap-2">
@@ -212,18 +239,7 @@ export default function CategoryPickerModal() {
                 return (
                   <button
                     key={idx}
-                    onClick={() => {
-                      setTaskForm({
-                        ...taskForm,
-                        name: sub.name,
-                        category: pickedCategory.id,
-                        subcategory: sub.name,
-                        meditationId: sub.meditationId || taskForm.meditationId,
-                      });
-                      setShowCategoryPicker(false);
-                      setPickedCategory(null);
-                      setPickerStep("category");
-                    }}
+                    onClick={() => applyPredefinedSelection(pickedCategory, sub)}
                     className="p-3 rounded-2xl border transition flex items-center gap-2.5 text-left hover:scale-[1.02]"
                     style={{ background: pickedCategory.color + "08", borderColor: TEMPO.border }}
                   >

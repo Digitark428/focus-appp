@@ -8,7 +8,7 @@ export default function BottomNav() {
     showProfile, setShowProfile,
     showPlanning, setShowPlanning,
     setProfileDraft, user,
-    setShowAdd, setEditingTask, setIsFloatingForm,
+    openAddChooser, addFlowMode, closeAddFlow,
     focusMode, activeMeditation, showCustomization,
     showSubscription,
   } = useFocus();
@@ -22,8 +22,11 @@ export default function BottomNav() {
   const isPlanning = showPlanning;
   const isDashboard = !showStats && !showProfile && !showPlanning;
 
-  // Helper: navigate to a single primary screen (mutually exclusive)
+  // Helper: navigate to a single primary screen (mutually exclusive).
+  // Toute navigation ferme un éventuel flow d'ajout en cours pour éviter
+  // un modal orphelin par-dessus un autre écran principal.
   const goTo = (target) => {
+    if (addFlowMode) closeAddFlow();
     setShowStats(target === "stats");
     setShowProfile(target === "profile");
     setShowPlanning(target === "planning");
@@ -65,14 +68,15 @@ export default function BottomNav() {
   ];
 
   const handleAdd = () => {
-    setEditingTask(null);
-    setIsFloatingForm(false);
     goTo("dashboard");
-    setShowAdd(true);
+    openAddChooser();
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-5 px-4 pointer-events-none">
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+      style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+    >
       <nav
         className="pointer-events-auto flex items-center gap-1 px-3 py-2.5 rounded-[28px]"
         style={{

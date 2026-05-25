@@ -51,7 +51,7 @@ export default function PlanningScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-32">
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-14" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}>
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <button

@@ -18,6 +18,7 @@ import FloatingTasksSection from "../components/FloatingTasksSection";
 import StartDayButton from "../components/StartDayButton";
 
 // Modals
+import AddTaskTypeChooser from "../components/modals/AddTaskTypeChooser";
 import AddEditTaskModal from "../components/modals/AddEditTaskModal";
 import CategoryPickerModal from "../components/modals/CategoryPickerModal";
 import CustomTaskTemplateEditor from "../components/modals/CustomTaskTemplateEditor";
@@ -61,7 +62,10 @@ export default function MainScreen() {
 
       <CurrentTaskTopBar />
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-32">
+      <div
+        className="relative z-10 max-w-md mx-auto px-6 pt-14"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}
+      >
         <MainHeader />
         <TrialBanner />
         <ConflictsBanner />
@@ -75,6 +79,7 @@ export default function MainScreen() {
         <StartDayButton />
 
         {/* Modals & dialogs */}
+        <AddTaskTypeChooser />
         <AddEditTaskModal />
         <CategoryPickerModal />
         <CustomTaskTemplateEditor />

@@ -9,7 +9,7 @@ export default function ConflictDialog() {
 
   return (
     <div
-      className="fixed inset-0 z-[78] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[88] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
       style={{ background: "rgba(7,19,38,0.85)" }}
       onClick={() => closable && setConflictDialog(null)}
     >

@@ -90,6 +90,17 @@ export function FocusProvider({ children }) {
   const [isFloatingForm, setIsFloatingForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+
+  // Mode d'ajout — single source of truth pour séparer strictement les
+  // trois flows de création.
+  //   null         = aucun ajout en cours
+  //   "chooser"    = l'utilisateur choisit le type (perso / prédéfinie / sans horaire)
+  //   "custom"     = saisie d'une tâche personnalisée (nom libre + horaires)
+  //   "predefined" = sélection catégorie puis sous-catégorie via picker
+  //   "floating"   = saisie d'une tâche sans horaire
+  //   "edit"       = édition d'une tâche existante (préserve son type)
+  const [addFlowMode, setAddFlowMode] = useState(null);
+
   const [taskForm, setTaskForm] = useState({
     name: "", start: "", end: "", notes: "",
     meditationId: null, category: null, subcategory: null,
@@ -310,6 +321,31 @@ export function FocusProvider({ children }) {
   }, [dragState, tasks]);
 
   // ────────────────────────────────────────────────────────────────────────
+  // Garde-fou d'invariant : addFlowMode contrôle la visibilité des modaux
+  // d'ajout. Si addFlowMode retombe à null sans passer par closeAddFlow,
+  // on force la fermeture des modaux/picker associés. Cela évite qu'un
+  // changement d'état involontaire (ex: setUser/setShowProfile pendant
+  // qu'un modal est ouvert) ne laisse un picker orphelin visible.
+  // ────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (addFlowMode === null) {
+      if (showCategoryPicker) setShowCategoryPicker(false);
+      if (showAdd) setShowAdd(false);
+    }
+    if (addFlowMode === "chooser" && showAdd) {
+      // Le chooser remplace l'AddModal, pas l'inverse.
+      setShowAdd(false);
+    }
+    if (addFlowMode !== "predefined" && showCategoryPicker) {
+      // Le picker n'a de sens que dans le flow predefined.
+      setShowCategoryPicker(false);
+      setPickerStep("category");
+      setPickedCategory(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addFlowMode]);
+
+  // ────────────────────────────────────────────────────────────────────────
   // Auth actions
   // ────────────────────────────────────────────────────────────────────────
 
@@ -415,6 +451,13 @@ export function FocusProvider({ children }) {
     setActiveMeditation(null);
     setIsRunning(false);
     setAuthMode("login");
+    // Coupe aussi tout flow d'ajout en cours pour ne pas laisser un
+    // modal/picker orphelin lors d'un retour rapide sur l'app.
+    setAddFlowMode(null);
+    setShowAdd(false);
+    setShowCategoryPicker(false);
+    setEditingTask(null);
+    setIsFloatingForm(false);
   };
 
   // Modification du mot de passe depuis le profil.
@@ -456,7 +499,7 @@ export function FocusProvider({ children }) {
       firstName: "Alex",
       lastName: "Demo",
       birthDate: "1990-01-01",
-      email: "beta@focus.app",
+      email: "beta@tempo.app",
       city: "",
       photo: null,
       bio: "",
@@ -473,47 +516,151 @@ export function FocusProvider({ children }) {
   };
 
   // ────────────────────────────────────────────────────────────────────────
-  // Task CRUD
+  // Task CRUD — Wizard de création
+  //
+  // Trois flows STRICTEMENT séparés :
+  //
+  //   openAddChooser()   → ouvre l'écran de choix du TYPE de tâche
+  //                        (custom / predefined / floating)
+  //   startCustomFlow()  → flow "Tâche personnalisée" (saisie libre)
+  //   startPredefinedFlow() → flow "Tâches prédéfinies" (picker → modal)
+  //   startFloatingFlow() → flow "Sans horaire"
+  //   openEdit(task)     → édition d'une tâche existante
+  //
+  // closeAddFlow() = sortie centralisée (annule tout, reset state).
   // ────────────────────────────────────────────────────────────────────────
-  const openAdd = () => {
+
+  // Calcule l'heure de début suggérée (fin de la dernière tâche du jour).
+  const computeSuggestedStart = () => {
+    if (sortedTasks.length === 0) return "";
+    const lastTask = sortedTasks.reduce(
+      (latest, t) => (toMin(t.end) > toMin(latest.end) ? t : latest),
+      sortedTasks[0],
+    );
+    return lastTask.end;
+  };
+
+  // Reset complet du form, indépendant du flow choisi.
+  const resetTaskForm = (overrides = {}) => {
+    setTaskForm({
+      name: "", start: "", end: "",
+      notes: "", meditationId: null,
+      category: null, subcategory: null,
+      ...overrides,
+    });
+  };
+
+  // Étape 0 : choix du type de tâche.
+  const openAddChooser = () => {
     setEditingTask(null);
     setIsFloatingForm(false);
-    let suggestedStart = "";
-    if (sortedTasks.length > 0) {
-      const lastTask = sortedTasks.reduce(
-        (latest, t) => (toMin(t.end) > toMin(latest.end) ? t : latest),
-        sortedTasks[0],
-      );
-      suggestedStart = lastTask.end;
-    }
-    setTaskForm({
-      name: "", start: suggestedStart, end: "",
-      notes: "", meditationId: null, category: null, subcategory: null,
-    });
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    resetTaskForm();
+    setShowAdd(false);
+    setAddFlowMode("chooser");
+  };
+
+  // Flow 1 : tâche personnalisée (libre).
+  const startCustomFlow = () => {
+    setIsFloatingForm(false);
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    resetTaskForm({ start: computeSuggestedStart() });
+    setAddFlowMode("custom");
     setShowAdd(true);
   };
+
+  // Flow 2 : tâche prédéfinie. Ouvre directement le picker, qui pré-remplira
+  // le form puis basculera vers le modal de saisie (étape "horaires").
+  const startPredefinedFlow = () => {
+    setIsFloatingForm(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    resetTaskForm({ start: computeSuggestedStart() });
+    setShowAdd(false);
+    setAddFlowMode("predefined");
+    setShowCategoryPicker(true);
+  };
+
+  // Flow 3 : tâche sans horaire (flottante).
+  const startFloatingFlow = () => {
+    setIsFloatingForm(true);
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    resetTaskForm();
+    setAddFlowMode("floating");
+    setShowAdd(true);
+  };
+
+  // Compat : openAdd / openAddFloating conservent leur signature pour les
+  // composants existants, mais redirigent vers le wizard.
+  const openAdd = () => openAddChooser();
 
   const openAddFloating = (prefill = null) => {
     setEditingTask(null);
     setIsFloatingForm(true);
-    setTaskForm({
-      name: prefill?.name || "", start: "", end: "",
-      notes: prefill?.notes || "", meditationId: null,
-      category: prefill?.category || null, subcategory: prefill?.subcategory || null,
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    resetTaskForm({
+      name: prefill?.name || "",
+      notes: prefill?.notes || "",
+      category: prefill?.category || null,
+      subcategory: prefill?.subcategory || null,
     });
+    setAddFlowMode("floating");
     setShowAdd(true);
   };
 
   const openEdit = (task, floating = false) => {
     setEditingTask(task);
     setIsFloatingForm(floating);
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
     setTaskForm({
       name: task.name, start: task.start || "", end: task.end || "",
       notes: task.notes || "",
       meditationId: task.meditationId || null,
       category: task.category || null, subcategory: task.subcategory || null,
     });
+    setAddFlowMode("edit");
     setShowAdd(true);
+  };
+
+  // Appelée par le CategoryPickerModal lorsqu'une sous-catégorie est choisie.
+  // Bascule du picker (flow predefined) vers le modal de saisie horaires.
+  const applyPredefinedSelection = (category, subcategory) => {
+    setTaskForm((prev) => ({
+      ...prev,
+      name: subcategory.name,
+      category: category.id,
+      subcategory: subcategory.name,
+      meditationId: subcategory.meditationId || prev.meditationId,
+    }));
+    setShowCategoryPicker(false);
+    setPickedCategory(null);
+    setPickerStep("category");
+    setShowAdd(true);
+  };
+
+  // Sortie centralisée — ferme TOUT et reset le state.
+  // C'est la SEULE fonction qui doit être appelée pour quitter un flow.
+  const closeAddFlow = () => {
+    setShowAdd(false);
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
+    setEditingTask(null);
+    setIsFloatingForm(false);
+    setAddFlowMode(null);
+    // On reset aussi le taskForm pour qu'aucune valeur ne persiste dans le DOM
+    // entre deux ouvertures.
+    resetTaskForm();
   };
 
   const saveTask = () => {
@@ -532,9 +679,7 @@ export function FocusProvider({ children }) {
           { id: Date.now(), ...taskForm, color: taskColor, floating: true },
         ]);
       }
-      setShowAdd(false);
-      setEditingTask(null);
-      setIsFloatingForm(false);
+      closeAddFlow();
       return;
     }
 
@@ -557,8 +702,7 @@ export function FocusProvider({ children }) {
         setTasks(tasks.map((t) => (t.id === editingTask.id ? { ...t, ...taskForm, color: taskColor } : t)));
         lastEndedRef.current.delete(editingTask.id);
         setNow(new Date());
-        setShowAdd(false);
-        setEditingTask(null);
+        closeAddFlow();
         return;
       }
       const earliestConflict = conflicts.reduce(
@@ -581,7 +725,7 @@ export function FocusProvider({ children }) {
     const conflicts = findConflicts(tasks, taskForm.start, taskForm.end);
     if (conflicts.length === 0) {
       setTasks([...tasks, { id: Date.now(), ...taskForm, color: taskColor }]);
-      setShowAdd(false);
+      closeAddFlow();
       return;
     }
     const fullyCovered = conflicts.filter(
@@ -611,7 +755,7 @@ export function FocusProvider({ children }) {
     }
     const shifted = cascadeShift(tasks, toMin(earliestConflict.start), shiftMin);
     setTasks([...shifted, { id: Date.now(), ...taskForm, color: taskColor }]);
-    setShowAdd(false);
+    closeAddFlow();
   };
 
   const applyEditWithCascade = () => {
@@ -625,8 +769,7 @@ export function FocusProvider({ children }) {
     lastEndedRef.current.delete(pendingTask.id);
     setNow(new Date());
     setConflictDialog(null);
-    setShowAdd(false);
-    setEditingTask(null);
+    closeAddFlow();
   };
 
   const autoRepairConflicts = () => {
@@ -714,15 +857,21 @@ export function FocusProvider({ children }) {
       suggestedStart = lastTask.end;
     }
     const suggestedEnd = suggestedStart ? fromMin(toMin(suggestedStart) + tpl.durationMin) : "";
+    // Bascule du picker (predefined) vers le flow custom avec le template
+    // pré-rempli. Le state est explicitement remis à zéro pour éviter toute
+    // fuite (ex. pickedCategory orphelin).
     setIsFloatingForm(false);
     setEditingTask(null);
+    setShowCategoryPicker(false);
+    setPickerStep("category");
+    setPickedCategory(null);
     setTaskForm({
       name: tpl.name, start: suggestedStart, end: suggestedEnd,
       notes: "", meditationId: null, category: null, subcategory: null,
       customIconKey: tpl.iconKey, customColor: tpl.color,
     });
+    setAddFlowMode("custom");
     setShowAdd(true);
-    setShowCategoryPicker(false);
   };
 
   // ────────────────────────────────────────────────────────────────────────
@@ -1162,7 +1311,11 @@ export function FocusProvider({ children }) {
     pickerStep, setPickerStep,
     pickedCategory, setPickedCategory,
     openAdd, openAddFloating, openEdit,
+    openAddChooser, startCustomFlow, startPredefinedFlow, startFloatingFlow,
+    applyPredefinedSelection,
+    addFlowMode, setAddFlowMode,
     saveTask, applyEditWithCascade, autoRepairConflicts, deleteTask, resetDay,
+    closeAddFlow,
 
     // Templates
     customTaskTemplates, setCustomTaskTemplates,

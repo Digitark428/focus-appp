@@ -12,9 +12,11 @@ export default function FloatingTasksSection() {
   const {
     floatingTasks, setFloatingTasks, openAddFloating, openEdit,
     sortedTasks, setIsFloatingForm, setEditingTask, setTaskForm, setShowAdd,
+    setAddFlowMode,
   } = useFocus();
 
-  // Schedule a floating task: copy data into the scheduled task form.
+  // Planifier une tâche flottante : on copie ses données dans le form
+  // "tâche planifiée" (custom) et on ouvre directement le modal de saisie.
   const scheduleFloating = (task) => {
     setFloatingTasks(floatingTasks.filter((t) => t.id !== task.id));
     setIsFloatingForm(false);
@@ -32,6 +34,7 @@ export default function FloatingTasksSection() {
       notes: task.notes || "", meditationId: null,
       category: task.category || null, subcategory: task.subcategory || null,
     });
+    setAddFlowMode("custom");
     setShowAdd(true);
   };
 
