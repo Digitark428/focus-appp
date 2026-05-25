@@ -15,19 +15,18 @@ import BottomNav from "./components/BottomNav";
 // ───────────────────────────────────────────────────────────────
 //  Router conditionnel.
 //
-//  Ordre : Splash (au tout premier rendu) → (si non connecté)
+//  Ordre : Splash → (hydratation Supabase) → (si non connecté)
 //  SignupScreen → Subscription → Focus → Meditation → Stats /
 //  Planning / Profile / Customization → Main.
-//
-//  Si l'utilisateur a une session restaurée depuis localStorage,
-//  on saute l'écran d'inscription/connexion et on arrive
-//  directement dans l'application.
 // ───────────────────────────────────────────────────────────────
 function Router() {
   const {
-    user, trialExpired, showSubscription, focusMode, activeMeditation,
+    user, authReady, trialExpired, showSubscription, focusMode, activeMeditation,
     showStats, showPlanning, showProfile, showCustomization,
   } = useFocus();
+
+  // Tant que la session n'est pas hydratée, on garde le splash visuel.
+  if (!authReady) return <SplashScreen onDone={() => {}} />;
 
   if (!user) return <SignupScreen />;
   if (trialExpired || showSubscription) return <SubscriptionScreen />;
@@ -43,8 +42,8 @@ function Router() {
 // BottomNav masquée tant que l'utilisateur n'est pas connecté
 // (splash, signup, subscription).
 function BottomNavGate() {
-  const { user, showSubscription, trialExpired } = useFocus();
-  if (!user || showSubscription || trialExpired) return null;
+  const { user, authReady, showSubscription, trialExpired } = useFocus();
+  if (!authReady || !user || showSubscription || trialExpired) return null;
   return <BottomNav />;
 }
 

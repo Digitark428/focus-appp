@@ -8,6 +8,10 @@ import {
   fromMin, todayIndex, toMin,
 } from "../utils/time";
 import { getDayThemes } from "../utils/themes";
+import { hasSupabase } from "../lib/supabaseClient";
+import * as Auth from "../services/auth";
+import * as Profiles from "../services/profile";
+import * as UserData from "../services/userData";
 
 const FocusContext = createContext(null);
 export const useFocus = () => {
@@ -22,13 +26,10 @@ const LONG_PRESS_MS = 350;
 
 export function FocusProvider({ children }) {
   // ── Auth ─────────────────────────────────────────────────────────────────
-  // Tente de restaurer la session depuis le localStorage.
-  const [user, setUser] = useState(() => {
-    try {
-      const raw = localStorage.getItem("tempo.session.user");
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  });
+  // Hydratation depuis Supabase (cf. effet plus bas). Pas de fallback
+  // localStorage : la session est restaurée via Supabase Auth.
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!hasSupabase);
   const [signupForm, setSignupForm] = useState({
     firstName: "", lastName: "", birthDate: "", email: "",
     password: "", confirmPassword: "",
@@ -346,29 +347,99 @@ export function FocusProvider({ children }) {
   }, [addFlowMode]);
 
   // ────────────────────────────────────────────────────────────────────────
-  // Auth actions
+  // Auth actions (Supabase)
   // ────────────────────────────────────────────────────────────────────────
 
-  // Persiste la session utilisateur localement (et les comptes connus).
-  // NOTE: structure préparée pour basculer ultérieurement sur un backend
-  // sans toucher aux composants (signature des actions inchangée).
+  // Hydratation depuis une session Supabase : profil + snapshot user_data.
+  // Conserve la forme `user` historiquement utilisée par les composants.
+  const hydrateFromSession = async (session) => {
+    if (!session?.user) { setUser(null); return; }
+    const uid = session.user.id;
+
+    const { profile } = await Profiles.fetchProfile(uid);
+    const sessionUser = {
+      id: uid,
+      email: session.user.email,
+      firstName:  profile?.first_name  || "",
+      lastName:   profile?.last_name   || "",
+      birthDate:  profile?.birth_date  || "",
+      city:       profile?.city        || "",
+      bio:        profile?.bio         || "",
+      photo:      profile?.photo_url   || null,
+      trialStart: profile?.trial_start ? new Date(profile.trial_start).getTime() : Date.now(),
+      isSubscribed: !!profile?.is_subscribed,
+      subscriptionStart: profile?.subscription_start
+        ? new Date(profile.subscription_start).getTime()
+        : null,
+    };
+    setUser(sessionUser);
+
+    // Snapshot applicatif (tâches, planning, completions, metrics, etc.)
+    const { snapshot } = await UserData.fetchUserData(uid);
+    if (snapshot) {
+      if (Object.keys(snapshot.weekTasks         || {}).length) setWeekTasks(snapshot.weekTasks);
+      if (Object.keys(snapshot.weekFloatingTasks || {}).length) setWeekFloatingTasks(snapshot.weekFloatingTasks);
+      if (Object.keys(snapshot.completions       || {}).length) setCompletions(snapshot.completions);
+      if (Object.keys(snapshot.dayMetrics        || {}).length) setDayMetrics(snapshot.dayMetrics);
+      if (Array.isArray(snapshot.customTemplates))              setCustomTaskTemplates(snapshot.customTemplates);
+      if (snapshot.customTheme)                                 setCustomTheme(snapshot.customTheme);
+    }
+  };
+
+  // Au montage : restaure la session puis écoute les changements.
   useEffect(() => {
-    try {
-      if (user) localStorage.setItem("tempo.session.user", JSON.stringify(user));
-      else localStorage.removeItem("tempo.session.user");
-    } catch { /* storage indisponible */ }
+    if (!hasSupabase) { setAuthReady(true); return; }
+    let unsub = () => {};
+    (async () => {
+      const { session } = await Auth.getSession();
+      await hydrateFromSession(session);
+      setAuthReady(true);
+      unsub = Auth.onAuthChange((s) => { hydrateFromSession(s); });
+    })();
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync du profil utilisateur vers Supabase (debounced).
+  const profileSyncTimer = useRef(null);
+  useEffect(() => {
+    if (!hasSupabase || !user?.id) return;
+    clearTimeout(profileSyncTimer.current);
+    profileSyncTimer.current = setTimeout(() => {
+      Profiles.updateProfile(user.id, {
+        first_name: user.firstName,
+        last_name:  user.lastName,
+        birth_date: user.birthDate || null,
+        city:       user.city || "",
+        bio:        user.bio  || "",
+        photo_url:  user.photo || null,
+        is_subscribed: !!user.isSubscribed,
+        subscription_start: user.subscriptionStart
+          ? new Date(user.subscriptionStart).toISOString()
+          : null,
+      }).catch(() => {});
+    }, 600);
+    return () => clearTimeout(profileSyncTimer.current);
   }, [user]);
 
-  const readAccounts = () => {
-    try { return JSON.parse(localStorage.getItem("tempo.accounts") || "[]"); }
-    catch { return []; }
-  };
-  const writeAccounts = (list) => {
-    try { localStorage.setItem("tempo.accounts", JSON.stringify(list)); }
-    catch { /* ignore */ }
-  };
+  // Sync du snapshot applicatif vers Supabase (debounced).
+  const dataSyncTimer = useRef(null);
+  useEffect(() => {
+    if (!hasSupabase || !user?.id) return;
+    clearTimeout(dataSyncTimer.current);
+    dataSyncTimer.current = setTimeout(() => {
+      UserData.saveUserData(user.id, {
+        weekTasks, weekFloatingTasks, completions, dayMetrics,
+        customTemplates: customTaskTemplates, customTheme,
+      }).catch(() => {});
+    }, 800);
+    return () => clearTimeout(dataSyncTimer.current);
+  }, [
+    user?.id, weekTasks, weekFloatingTasks, completions, dayMetrics,
+    customTaskTemplates, customTheme,
+  ]);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setAuthError(null);
     const { firstName, lastName, birthDate, email, password, confirmPassword } = signupForm;
     if (!firstName || !lastName || !birthDate || !email || !password || !confirmPassword) {
@@ -383,63 +454,55 @@ export function FocusProvider({ children }) {
       setAuthError("Les mots de passe ne correspondent pas.");
       return;
     }
-    const accounts = readAccounts();
-    if (accounts.some((a) => a.email.toLowerCase() === email.toLowerCase())) {
-      setAuthError("Un compte existe déjà avec cet email.");
+    const { data, error } = await Auth.signUp({
+      email, password, firstName, lastName, birthDate,
+    });
+    if (error) {
+      setAuthError(error.message || "Erreur lors de l'inscription.");
       return;
     }
-    const newAccount = {
-      firstName, lastName, birthDate, email, password,
-      city: "", photo: null, bio: "",
-      trialStart: Date.now(), isSubscribed: false,
-    };
-    writeAccounts([...accounts, newAccount]);
-    // eslint-disable-next-line no-unused-vars
-    const { password: _pw, ...sessionUser } = newAccount;
-    setUser(sessionUser);
+    if (!data?.session) {
+      // Confirmation email activée : on informe l'utilisateur.
+      setAuthError("Compte créé. Vérifiez votre email pour confirmer votre adresse.");
+    }
     setSignupForm({
       firstName: "", lastName: "", birthDate: "", email: "",
       password: "", confirmPassword: "",
     });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setAuthError(null);
     const { email, password } = loginForm;
     if (!email || !password) {
       setAuthError("Veuillez renseigner email et mot de passe.");
       return;
     }
-    const accounts = readAccounts();
-    const match = accounts.find(
-      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
-    );
-    if (!match) {
+    const { error } = await Auth.signIn({ email, password });
+    if (error) {
       setAuthError("Identifiants incorrects.");
       return;
     }
-    // eslint-disable-next-line no-unused-vars
-    const { password: _pw, ...sessionUser } = match;
-    setUser(sessionUser);
     setLoginForm({ email: "", password: "" });
+    // hydratation déclenchée par onAuthChange
   };
 
-  // Architecture "mot de passe oublié" — pas d'envoi réel d'email pour
-  // l'instant ; on confirme uniquement que la demande est reçue.
-  // Quand un service mail sera branché, il suffira de remplacer ce corps.
-  const handleForgotPassword = () => {
+  // Reset par email — Supabase envoie le lien si l'utilisateur existe.
+  // Pas de leak d'existence côté UI.
+  const handleForgotPassword = async () => {
     setAuthError(null);
     const { email } = forgotForm;
     if (!email) {
       setAuthError("Veuillez saisir votre email.");
       return false;
     }
-    // Toujours répondre la même chose (sécurité : ne pas révéler l'existence).
+    await Auth.resetPasswordForEmail(email).catch(() => {});
     setForgotForm({ email: "" });
     return true;
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await Auth.signOut().catch(() => {});
     setUser(null);
     setShowProfile(false);
     setShowStats(false);
@@ -451,17 +514,22 @@ export function FocusProvider({ children }) {
     setActiveMeditation(null);
     setIsRunning(false);
     setAuthMode("login");
-    // Coupe aussi tout flow d'ajout en cours pour ne pas laisser un
-    // modal/picker orphelin lors d'un retour rapide sur l'app.
     setAddFlowMode(null);
     setShowAdd(false);
     setShowCategoryPicker(false);
     setEditingTask(null);
     setIsFloatingForm(false);
+    // Reset local du state applicatif (le snapshot reste en BDD).
+    setWeekTasks(DEFAULT_TASKS);
+    setWeekFloatingTasks(DEFAULT_FLOATING);
+    setCompletions(DEFAULT_COMPLETIONS);
+    setDayMetrics(DEFAULT_DAY_METRICS);
+    setCustomTaskTemplates([]);
   };
 
-  // Modification du mot de passe depuis le profil.
-  const changePassword = () => {
+  // Changement de mot de passe depuis le profil — vérifie l'ancien
+  // via une tentative de signIn, puis met à jour via updateUser.
+  const changePassword = async () => {
     setPasswordChangeMessage(null);
     const { current, next, confirm } = passwordForm;
     if (!current || !next || !confirm) {
@@ -476,20 +544,17 @@ export function FocusProvider({ children }) {
       setPasswordChangeMessage({ type: "error", text: "La confirmation ne correspond pas." });
       return;
     }
-    const accounts = readAccounts();
-    const idx = accounts.findIndex((a) => a.email.toLowerCase() === user.email.toLowerCase());
-    if (idx === -1) {
-      // Cas bêta / compte non persisté : on accepte en local pour ne pas bloquer.
-      setPasswordChangeMessage({ type: "success", text: "Mot de passe mis à jour." });
-      setPasswordForm({ current: "", next: "", confirm: "" });
+    if (!user?.email) {
+      setPasswordChangeMessage({ type: "error", text: "Session invalide." });
       return;
     }
-    if (accounts[idx].password !== current) {
-      setPasswordChangeMessage({ type: "error", text: "Mot de passe actuel incorrect." });
+    const { error } = await Auth.changePassword({
+      email: user.email, current, next,
+    });
+    if (error) {
+      setPasswordChangeMessage({ type: "error", text: error.message || "Échec du changement." });
       return;
     }
-    accounts[idx] = { ...accounts[idx], password: next };
-    writeAccounts(accounts);
     setPasswordChangeMessage({ type: "success", text: "Mot de passe mis à jour." });
     setPasswordForm({ current: "", next: "", confirm: "" });
   };
@@ -1189,19 +1254,31 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   // Profile / photo upload
   // ────────────────────────────────────────────────────────────────────────
-  // Si un brouillon profil est ouvert, on met la photo dans le brouillon.
-  // Sinon (ex. clic depuis le dashboard) on l'écrit directement sur user
-  // pour qu'elle soit immédiatement visible et persistée.
-  const handlePhotoUpload = (e) => {
+  // Aperçu local immédiat (UX), puis upload distant vers Supabase Storage
+  // (bucket "avatars") si la session est active. L'URL publique remplace
+  // l'aperçu base64 dans user/profileDraft une fois l'upload terminé.
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // 1) Aperçu local immédiat
     const reader = new FileReader();
     reader.onload = (ev) => {
       const photo = ev.target.result;
-      if (profileDraft) setProfileDraft({ ...profileDraft, photo });
+      if (profileDraft) setProfileDraft((d) => ({ ...(d || user), photo }));
       else setUser((u) => (u ? { ...u, photo } : u));
     };
     reader.readAsDataURL(file);
+
+    // 2) Upload distant
+    if (hasSupabase && user?.id) {
+      const { url, error } = await Profiles.uploadAvatar(user.id, file);
+      if (!error && url) {
+        if (profileDraft) setProfileDraft((d) => ({ ...(d || user), photo: url }));
+        else setUser((u) => (u ? { ...u, photo: url } : u));
+      }
+    }
+    e.target.value = "";
   };
 
   // ────────────────────────────────────────────────────────────────────────
@@ -1262,6 +1339,7 @@ export function FocusProvider({ children }) {
   const value = {
     // Auth
     user, setUser,
+    authReady,
     signupForm, setSignupForm,
     loginForm, setLoginForm,
     forgotForm, setForgotForm,
