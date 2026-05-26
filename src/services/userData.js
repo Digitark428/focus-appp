@@ -8,36 +8,39 @@ import { supabase } from "../lib/supabaseClient";
 // ─────────────────────────────────────────────────────────────────────────
 
 const SHAPE = {
-  weekTasks:          {},
-  weekFloatingTasks:  {},
-  completions:        {},
-  dayMetrics:         {},
-  customTemplates:    [],
-  customTheme:        "default",
-  settings:           {},
+  weekTasks:           {},
+  weekFloatingTasks:   {},
+  completions:         {},
+  floatingCompletions: {},
+  dayMetrics:          {},
+  customTemplates:     [],
+  customTheme:         "default",
+  settings:            {},
 };
 
 const dbToApp = (row) => {
   if (!row) return { ...SHAPE };
   return {
-    weekTasks:         row.week_tasks          || {},
-    weekFloatingTasks: row.week_floating_tasks || {},
-    completions:       row.completions         || {},
-    dayMetrics:        row.day_metrics         || {},
-    customTemplates:   row.custom_templates    || [],
-    customTheme:       row.custom_theme        || "default",
-    settings:          row.settings            || {},
+    weekTasks:           row.week_tasks            || {},
+    weekFloatingTasks:   row.week_floating_tasks   || {},
+    completions:         row.completions           || {},
+    floatingCompletions: row.floating_completions  || {},
+    dayMetrics:          row.day_metrics           || {},
+    customTemplates:     row.custom_templates      || [],
+    customTheme:         row.custom_theme          || "default",
+    settings:            row.settings              || {},
   };
 };
 
 const appToDb = (s) => ({
-  week_tasks:          s.weekTasks          ?? {},
-  week_floating_tasks: s.weekFloatingTasks  ?? {},
-  completions:         s.completions        ?? {},
-  day_metrics:         s.dayMetrics         ?? {},
-  custom_templates:    s.customTemplates    ?? [],
-  custom_theme:        s.customTheme        ?? "default",
-  settings:            s.settings           ?? {},
+  week_tasks:            s.weekTasks           ?? {},
+  week_floating_tasks:   s.weekFloatingTasks   ?? {},
+  completions:           s.completions         ?? {},
+  floating_completions:  s.floatingCompletions ?? {},
+  day_metrics:           s.dayMetrics          ?? {},
+  custom_templates:      s.customTemplates     ?? [],
+  custom_theme:          s.customTheme         ?? "default",
+  settings:              s.settings            ?? {},
 });
 
 export async function fetchUserData(userId) {

@@ -26,6 +26,7 @@ import ConflictDialog from "../components/modals/ConflictDialog";
 import ResetDayConfirm from "../components/modals/ResetDayConfirm";
 import { NoTasksWarning, PauseConfirm } from "../components/modals/PauseAndNoTasksDialogs";
 import MenuDrawer from "../components/MenuDrawer";
+import FloatingTaskDetailModal from "../components/modals/FloatingTaskDetailModal";
 
 // Overlays
 import {
@@ -85,6 +86,7 @@ export default function MainScreen() {
         <PauseConfirm />
         <NoTasksWarning />
         <MenuDrawer />
+        <FloatingTaskDetailModal />
 
         {/* Animated overlays */}
         <ValidationBurst />

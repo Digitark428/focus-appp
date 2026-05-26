@@ -35,15 +35,24 @@ export default function EndTaskPopup() {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 backdrop-blur-md"
-      style={{ background: "rgba(7,19,38,0.82)" }}
+      className="fixed inset-0 z-[95] flex items-end sm:items-center justify-center backdrop-blur-md overflow-y-auto"
+      style={{
+        background: "rgba(7,19,38,0.82)",
+        paddingTop: "max(16px, env(safe-area-inset-top))",
+        paddingBottom: "max(120px, calc(env(safe-area-inset-bottom) + 120px))",
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
     >
       <div
-        className="rounded-3xl p-6 w-full max-w-sm"
+        className="rounded-3xl p-6 w-full max-w-sm my-auto"
         style={{
           background: "linear-gradient(180deg, #0F2342 0%, #0B1D3A 100%)",
           border: `1px solid ${accent}60`,
           boxShadow: `0 20px 60px ${accent}30, ${TEMPO_SHADOWS.cardHi}`,
+          maxHeight: "calc(100dvh - 160px)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {!showExtendChoice ? (

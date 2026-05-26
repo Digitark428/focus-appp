@@ -38,16 +38,21 @@ create index if not exists profiles_email_idx on public.profiles (lower(email));
 --    1 ligne par utilisateur — full snapshot JSONB, upsert simple.
 -- =========================================================================
 create table if not exists public.user_data (
-  user_id              uuid primary key references auth.users(id) on delete cascade,
-  week_tasks           jsonb not null default '{}'::jsonb,
-  week_floating_tasks  jsonb not null default '{}'::jsonb,
-  completions          jsonb not null default '{}'::jsonb,
-  day_metrics          jsonb not null default '{}'::jsonb,
-  custom_templates     jsonb not null default '[]'::jsonb,
-  custom_theme         text  not null default 'default',
-  settings             jsonb not null default '{}'::jsonb,
-  updated_at           timestamptz not null default now()
+  user_id               uuid primary key references auth.users(id) on delete cascade,
+  week_tasks            jsonb not null default '{}'::jsonb,
+  week_floating_tasks   jsonb not null default '{}'::jsonb,
+  completions           jsonb not null default '{}'::jsonb,
+  floating_completions  jsonb not null default '{}'::jsonb,
+  day_metrics           jsonb not null default '{}'::jsonb,
+  custom_templates      jsonb not null default '[]'::jsonb,
+  custom_theme          text  not null default 'default',
+  settings              jsonb not null default '{}'::jsonb,
+  updated_at            timestamptz not null default now()
 );
+
+-- Migration : ajout idempotent de la colonne pour bases existantes.
+alter table public.user_data
+  add column if not exists floating_completions jsonb not null default '{}'::jsonb;
 
 -- =========================================================================
 -- 4. TABLES NORMALISÉES (optionnel — pour requêtes/analytics futures).

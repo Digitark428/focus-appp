@@ -1,4 +1,4 @@
-import { CalendarPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
 import { toMin } from "../utils/time";
@@ -7,12 +7,15 @@ import { TEMPO } from "../utils/tempoTheme";
 // Couleur d'accent secondaire pour les tâches flottantes (légèrement
 // distinguée du doré principal sans casser l'identité Tempo).
 const FLOAT = "#E2B872";
+// Vert pastel premium pour l'état "terminée" (cohérent app-wide).
+const SUCCESS_SOFT = "#86EFAC";
 
 export default function FloatingTasksSection() {
   const {
     floatingTasks, setFloatingTasks, openAddFloating, openEdit,
     sortedTasks, setIsFloatingForm, setEditingTask, setTaskForm, setShowAdd,
     setAddFlowMode,
+    dayFloatingCompletions, openFloatingDetail,
   } = useFocus();
 
   // Planifier une tâche flottante : on copie ses données dans le form
@@ -88,32 +91,59 @@ export default function FloatingTasksSection() {
           {floatingTasks.map((task) => {
             const cat = TASK_CATEGORIES.find((c) => c.id === task.category);
             const CatIcon = cat?.icon;
+            const isDone = dayFloatingCompletions[task.id] === "done";
+            const accent = isDone ? SUCCESS_SOFT : FLOAT;
             return (
               <div
                 key={task.id}
-                className="relative overflow-hidden rounded-2xl border flex items-center gap-3 px-4 py-3.5 group"
+                onClick={() => openFloatingDetail(task)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openFloatingDetail(task);
+                  }
+                }}
+                className="relative overflow-hidden rounded-2xl border flex items-center gap-3 px-4 py-3.5 group cursor-pointer transition hover:bg-white/[0.02]"
                 style={{
-                  background: `linear-gradient(135deg, ${FLOAT}10 0%, ${FLOAT}04 100%)`,
-                  borderColor: FLOAT + "30",
+                  background: isDone
+                    ? `linear-gradient(135deg, ${SUCCESS_SOFT}10 0%, ${SUCCESS_SOFT}03 100%)`
+                    : `linear-gradient(135deg, ${FLOAT}10 0%, ${FLOAT}04 100%)`,
+                  borderColor: accent + (isDone ? "40" : "30"),
+                  opacity: isDone ? 0.85 : 1,
                 }}
               >
                 <div
                   className="absolute left-0 inset-y-0 w-0.5 rounded-r-full"
-                  style={{ background: `linear-gradient(180deg, ${FLOAT}, ${TEMPO.gold}, ${TEMPO.goldDeep})` }}
+                  style={{
+                    background: isDone
+                      ? `linear-gradient(180deg, ${SUCCESS_SOFT}, ${SUCCESS_SOFT}AA)`
+                      : `linear-gradient(180deg, ${FLOAT}, ${TEMPO.gold}, ${TEMPO.goldDeep})`,
+                  }}
                 />
 
                 <div
                   className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center"
-                  style={{ background: FLOAT + "18", border: `1px solid ${FLOAT}30` }}
+                  style={{ background: accent + "18", border: `1px solid ${accent}30` }}
                 >
                   {CatIcon
-                    ? <CatIcon size={14} style={{ color: FLOAT }} />
+                    ? <CatIcon size={14} style={{ color: accent }} />
                     : <span className="text-base">🔖</span>}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: TEMPO.text }}>
+                  <p
+                    className="text-sm font-medium truncate flex items-center gap-1.5"
+                    style={{
+                      color: TEMPO.text,
+                      textDecoration: isDone ? "line-through" : "none",
+                      textDecorationColor: isDone ? SUCCESS_SOFT + "AA" : undefined,
+                      textDecorationThickness: "1px",
+                    }}
+                  >
                     {task.name}
+                    {isDone && <CheckCircle2 size={11} style={{ color: SUCCESS_SOFT }} />}
                   </p>
                   {task.subcategory && (
                     <p className="text-[11px] truncate" style={{ color: TEMPO.textDim }}>
@@ -130,15 +160,15 @@ export default function FloatingTasksSection() {
                 <span
                   className="text-[10px] px-2 py-0.5 rounded-full shrink-0"
                   style={{
-                    background: FLOAT + "18",
-                    color: FLOAT,
-                    border: `1px solid ${FLOAT}30`,
+                    background: accent + "18",
+                    color: accent,
+                    border: `1px solid ${accent}30`,
                   }}
                 >
-                  En attente
+                  {isDone ? "Terminée" : "En attente"}
                 </span>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => scheduleFloating(task)}
                     className="w-8 h-8 rounded-full flex items-center justify-center transition hover:scale-110"

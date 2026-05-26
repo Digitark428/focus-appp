@@ -1,4 +1,4 @@
-import { ChevronRight, Clock, Pencil, Sparkles, X } from "lucide-react";
+import { BookmarkPlus, ChevronRight, Clock, Pencil, Sparkles, X } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
@@ -8,10 +8,11 @@ import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 //  Écran 0 du wizard d'ajout. Affiché uniquement quand
 //  addFlowMode === "chooser".
 //
-//  Présente 3 options strictement séparées :
-//    1) Tâche personnalisée  (libre)
-//    2) Tâches prédéfinies   (catégories Tempo)
-//    3) Tâche sans horaire   (flottante)
+//  Présente 4 options strictement séparées :
+//    1) Tâche personnalisée            (libre, horaires)
+//    2) Tâches prédéfinies             (catégories Tempo)
+//    3) Tâche sans horaire             (flottante)
+//    4) Tâche personnalisée réutilisable (bibliothèque)
 //
 //  Chaque option déclenche son propre flow ; aucun state n'est
 //  partagé entre les flows. C'est l'unique source d'entrée pour
@@ -20,7 +21,7 @@ import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 export default function AddTaskTypeChooser() {
   const {
     addFlowMode, closeAddFlow,
-    startCustomFlow, startPredefinedFlow, startFloatingFlow,
+    startCustomFlow, startPredefinedFlow, startFloatingFlow, startTemplateFlow,
     dayTheme,
   } = useFocus();
 
@@ -107,6 +108,13 @@ export default function AddTaskTypeChooser() {
             title="Sans horaire"
             desc="À placer plus tard dans la journée"
             onClick={startFloatingFlow}
+          />
+          <Option
+            icon={BookmarkPlus}
+            accent="#9BB7E6"
+            title="Tâche réutilisable"
+            desc="À enregistrer dans votre bibliothèque"
+            onClick={startTemplateFlow}
           />
         </div>
 

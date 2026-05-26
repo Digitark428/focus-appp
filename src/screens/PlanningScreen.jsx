@@ -1,22 +1,26 @@
-import { CheckCircle2, ChevronLeft, Clock } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
 import { toMin } from "../utils/time";
 import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
+import PlanningTaskDetailModal from "../components/modals/PlanningTaskDetailModal";
+
+// Vert pastel premium pour l'état "terminée" (cohérent app-wide).
+const SUCCESS_SOFT = "#86EFAC";
 
 // ============================================================
 //  PlanningScreen — Vue semaine complète, lecture seule.
 //
 //  Sert de miroir / historique : l'utilisateur visualise toutes
-//  les tâches programmées sur les 7 jours, mais NE PEUT PAS les
-//  modifier ici. Les modifications restent centralisées dans le
-//  dashboard principal (cohérence et garde-fou conformément aux
-//  exigences produit).
+//  les tâches programmées sur les 7 jours. Le clic sur une tâche
+//  ouvre un détail in-page (lecture seule). Le clic sur l'en-tête
+//  d'un jour bascule vers le dashboard du jour.
 // ============================================================
 export default function PlanningScreen() {
   const {
-    activeDayThemes, weekTasks, weekFloatingTasks, completions,
+    activeDayThemes, weekTasks, weekFloatingTasks, completions, floatingCompletions,
     setShowPlanning, setSelectedDay, setShowProfile, setShowStats,
+    openPlanningDetail,
   } = useFocus();
 
   // Compte tâches totales / accomplies sur la semaine pour le résumé en tête.
@@ -29,8 +33,7 @@ export default function PlanningScreen() {
   });
   const weekPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-  // Quand on clique sur une carte tâche : on bascule sur le dashboard
-  // du bon jour (où la modification reste possible).
+  // Bascule vers le dashboard d'un jour (modification possible là-bas).
   const jumpToDay = (dayIdx) => {
     setSelectedDay(dayIdx);
     setShowPlanning(false);
@@ -114,36 +117,42 @@ export default function PlanningScreen() {
             );
             const floats = weekFloatingTasks[dayIdx] || [];
             const dayComp = completions[dayIdx] || {};
+            const dayFloatComp = floatingCompletions[dayIdx] || {};
             const accent = theme.accent;
 
             return (
-              <button
+              <div
                 key={dayIdx}
-                onClick={() => jumpToDay(dayIdx)}
-                className="w-full text-left rounded-2xl border p-4 transition hover:bg-white/[0.03]"
+                className="rounded-2xl border p-4"
                 style={{
                   background: "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",
                   borderColor: TEMPO.border,
                 }}
               >
-                {/* Header jour */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
+                {/* Header jour — cliquable pour basculer vers le dashboard du jour */}
+                <button
+                  onClick={() => jumpToDay(dayIdx)}
+                  className="w-full flex items-center justify-between mb-3 transition hover:opacity-90 text-left"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className="w-1.5 h-1.5 rounded-full"
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
                       style={{ background: accent, boxShadow: `0 0 6px ${accent}` }}
                     />
-                    <p className="text-sm font-medium" style={{ color: TEMPO.text }}>
+                    <p className="text-sm font-medium truncate" style={{ color: TEMPO.text }}>
                       {theme.name}
                     </p>
-                    <p className="text-[10px] italic" style={{ color: TEMPO.textDim }}>
+                    <p className="text-[10px] italic truncate" style={{ color: TEMPO.textDim }}>
                       · {theme.mood}
                     </p>
                   </div>
-                  <p className="text-[11px] font-mono tabular-nums" style={{ color: TEMPO.textDim }}>
-                    {tasks.length} {tasks.length > 1 ? "tâches" : "tâche"}
-                  </p>
-                </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <p className="text-[11px] font-mono tabular-nums" style={{ color: TEMPO.textDim }}>
+                      {tasks.length} {tasks.length > 1 ? "tâches" : "tâche"}
+                    </p>
+                    <ChevronRight size={12} style={{ color: TEMPO.textMuted }} />
+                  </div>
+                </button>
 
                 {/* Liste compacte */}
                 {tasks.length === 0 && floats.length === 0 ? (
@@ -161,26 +170,37 @@ export default function PlanningScreen() {
                       const isSkipped = status === "skipped";
 
                       return (
-                        <div
+                        <button
                           key={task.id}
-                          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg"
+                          onClick={() => openPlanningDetail({ task, dayIdx, isFloating: false, status })}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left transition hover:scale-[1.005] active:scale-[0.995]"
                           style={{
-                            background: task.color + "10",
-                            border: `1px solid ${task.color}25`,
+                            background: isDone
+                              ? SUCCESS_SOFT + "12"
+                              : task.color + "10",
+                            border: `1px solid ${isDone ? SUCCESS_SOFT + "40" : task.color + "25"}`,
                             opacity: isSkipped ? 0.55 : 1,
                           }}
                         >
                           <span
                             className="w-1 h-6 rounded-full shrink-0"
-                            style={{ background: task.color, boxShadow: `0 0 6px ${task.color}80` }}
+                            style={{
+                              background: isDone ? SUCCESS_SOFT : task.color,
+                              boxShadow: `0 0 6px ${(isDone ? SUCCESS_SOFT : task.color)}80`,
+                            }}
                           />
                           <div className="flex-1 min-w-0">
                             <p
                               className="text-[12px] font-medium truncate flex items-center gap-1.5"
-                              style={{ color: TEMPO.text }}
+                              style={{
+                                color: TEMPO.text,
+                                textDecoration: isDone ? "line-through" : "none",
+                                textDecorationColor: isDone ? SUCCESS_SOFT + "AA" : undefined,
+                                textDecorationThickness: "1px",
+                              }}
                             >
                               {task.name}
-                              {isDone && <CheckCircle2 size={10} style={{ color: TEMPO.success }} />}
+                              {isDone && <CheckCircle2 size={10} style={{ color: SUCCESS_SOFT }} />}
                               {isSkipped && (
                                 <span className="text-[10px]" style={{ color: TEMPO.textMuted }}>×</span>
                               )}
@@ -193,11 +213,11 @@ export default function PlanningScreen() {
                           </div>
                           <span
                             className="text-[10px] font-mono tabular-nums whitespace-nowrap"
-                            style={{ color: TEMPO.textDim }}
+                            style={{ color: isDone ? SUCCESS_SOFT : TEMPO.textDim }}
                           >
                             {task.start}–{task.end}
                           </span>
-                        </div>
+                        </button>
                       );
                     })}
 
@@ -210,29 +230,43 @@ export default function PlanningScreen() {
                           <Clock size={10} /> À programmer ({floats.length})
                         </p>
                         <div className="flex flex-wrap gap-1.5">
-                          {floats.map((f) => (
-                            <span
-                              key={f.id}
-                              className="text-[10px] px-2 py-1 rounded-full"
-                              style={{
-                                background: f.color + "15",
-                                border: `1px solid ${f.color}30`,
-                                color: TEMPO.text,
-                              }}
-                            >
-                              {f.name}
-                            </span>
-                          ))}
+                          {floats.map((f) => {
+                            const fIsDone = dayFloatComp[f.id] === "done";
+                            return (
+                              <button
+                                key={f.id}
+                                onClick={() => openPlanningDetail({
+                                  task: f, dayIdx, isFloating: true,
+                                  status: fIsDone ? "done" : null,
+                                })}
+                                className="text-[10px] px-2 py-1 rounded-full transition hover:scale-105 active:scale-95 flex items-center gap-1"
+                                style={{
+                                  background: fIsDone ? SUCCESS_SOFT + "14" : (f.color || "#E2B872") + "15",
+                                  border: `1px solid ${fIsDone ? SUCCESS_SOFT + "40" : (f.color || "#E2B872") + "30"}`,
+                                  color: TEMPO.text,
+                                  textDecoration: fIsDone ? "line-through" : "none",
+                                  textDecorationColor: fIsDone ? SUCCESS_SOFT + "AA" : undefined,
+                                  opacity: fIsDone ? 0.85 : 1,
+                                }}
+                              >
+                                {f.name}
+                                {fIsDone && <CheckCircle2 size={9} style={{ color: SUCCESS_SOFT }} />}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                   </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal détail tâche (lecture seule, intégré au planning) */}
+      <PlanningTaskDetailModal />
     </div>
   );
 }

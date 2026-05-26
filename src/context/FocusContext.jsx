@@ -78,6 +78,17 @@ export function FocusProvider({ children }) {
     name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap",
   });
 
+  // ── Floating task completions (par jour) ─────────────────────────────────
+  // Clé : selectedDay → { [floatingTaskId]: "done" }
+  const [floatingCompletions, setFloatingCompletions] = useState({});
+
+  // ── Détail tâche sans horaire (modal lecture/action) ─────────────────────
+  const [floatingDetail, setFloatingDetail] = useState(null);
+
+  // ── Détail tâche dans le planning (modal lecture seule) ──────────────────
+  // Shape : { task, dayIdx, isFloating, status } | null
+  const [planningDetail, setPlanningDetail] = useState(null);
+
   // ── Time / running state ─────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
@@ -403,6 +414,7 @@ export function FocusProvider({ children }) {
       if (Object.keys(snapshot.weekTasks         || {}).length) setWeekTasks(snapshot.weekTasks);
       if (Object.keys(snapshot.weekFloatingTasks || {}).length) setWeekFloatingTasks(snapshot.weekFloatingTasks);
       if (Object.keys(snapshot.completions       || {}).length) setCompletions(snapshot.completions);
+      if (Object.keys(snapshot.floatingCompletions || {}).length) setFloatingCompletions(snapshot.floatingCompletions);
       if (Object.keys(snapshot.dayMetrics        || {}).length) setDayMetrics(snapshot.dayMetrics);
       if (Array.isArray(snapshot.customTemplates))              setCustomTaskTemplates(snapshot.customTemplates);
       if (snapshot.customTheme)                                 setCustomTheme(snapshot.customTheme);
@@ -452,13 +464,13 @@ export function FocusProvider({ children }) {
     clearTimeout(dataSyncTimer.current);
     dataSyncTimer.current = setTimeout(() => {
       UserData.saveUserData(user.id, {
-        weekTasks, weekFloatingTasks, completions, dayMetrics,
+        weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
         customTemplates: customTaskTemplates, customTheme,
       }).catch(() => {});
     }, 800);
     return () => clearTimeout(dataSyncTimer.current);
   }, [
-    user?.id, weekTasks, weekFloatingTasks, completions, dayMetrics,
+    user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
     customTaskTemplates, customTheme,
   ]);
 
@@ -682,6 +694,16 @@ export function FocusProvider({ children }) {
     resetTaskForm();
     setAddFlowMode("floating");
     setShowAdd(true);
+  };
+
+  // Nouveau : créer directement une tâche réutilisable (bibliothèque)
+  // depuis le menu principal "+", sans passer par les tâches prédéfinies.
+  const startTemplateFlow = () => {
+    setAddFlowMode(null);
+    setShowAdd(false);
+    setEditingTemplate(null);
+    setTemplateForm({ name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
+    setShowCustomTaskEditor(true);
   };
 
   // Compat : openAdd / openAddFloating conservent leur signature pour les
@@ -1161,6 +1183,34 @@ export function FocusProvider({ children }) {
     setTimeout(() => triggerTaskTransition(taskId), 1900);
   };
 
+  // ── Tâches sans horaire : terminer / dé-terminer ────────────────────────
+  const dayFloatingCompletions = floatingCompletions[selectedDay] || {};
+  const markFloatingDone = (taskId) => {
+    const ftask = floatingTasks.find((t) => t.id === taskId);
+    setFloatingCompletions({
+      ...floatingCompletions,
+      [selectedDay]: { ...dayFloatingCompletions, [taskId]: "done" },
+    });
+    if (ftask) {
+      setValidationBurst({ color: ftask.color || "#E2B872", ts: Date.now() });
+      setTimeout(() => setValidationBurst(null), 1800);
+    }
+    setFloatingDetail(null);
+  };
+  const unmarkFloatingDone = (taskId) => {
+    const next = { ...dayFloatingCompletions };
+    delete next[taskId];
+    setFloatingCompletions({ ...floatingCompletions, [selectedDay]: next });
+  };
+
+  // Ouvre le détail d'une tâche flottante (lecture + action terminer)
+  const openFloatingDetail = (task) => setFloatingDetail(task);
+  const closeFloatingDetail = () => setFloatingDetail(null);
+
+  // Ouvre le détail d'une tâche depuis le planning (lecture seule)
+  const openPlanningDetail = (payload) => setPlanningDetail(payload);
+  const closePlanningDetail = () => setPlanningDetail(null);
+
   const markTaskSkipped = (taskId) => {
     setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [taskId]: "skipped" } });
     shiftUpcomingByResponseDelay(taskId);
@@ -1492,7 +1542,7 @@ export function FocusProvider({ children }) {
     pickerStep, setPickerStep,
     pickedCategory, setPickedCategory,
     openAdd, openAddFloating, openEdit,
-    openAddChooser, startCustomFlow, startPredefinedFlow, startFloatingFlow,
+    openAddChooser, startCustomFlow, startPredefinedFlow, startFloatingFlow, startTemplateFlow,
     applyPredefinedSelection,
     addFlowMode, setAddFlowMode,
     saveTask, applyEditWithCascade, autoRepairConflicts, deleteTask, resetDay,
@@ -1520,6 +1570,15 @@ export function FocusProvider({ children }) {
     showResetConfirm, setShowResetConfirm,
     validationBurst, taskTransition, setTaskTransition,
     markTaskDone, markTaskSkipped, extendTask, finishEarly,
+
+    // Floating completions + detail
+    floatingCompletions, setFloatingCompletions,
+    dayFloatingCompletions,
+    markFloatingDone, unmarkFloatingDone,
+    floatingDetail, openFloatingDetail, closeFloatingDetail,
+
+    // Planning detail (modal lecture seule dans le planning)
+    planningDetail, openPlanningDetail, closePlanningDetail,
 
     // Refs needed by JSX (manual popup trigger from a task card)
     popupOpenedAtRef, popupTriggerKindRef,
