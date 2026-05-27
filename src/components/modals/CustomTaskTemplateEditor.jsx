@@ -74,6 +74,26 @@ export default function CustomTaskTemplateEditor() {
             className="text-[10px] uppercase tracking-[0.22em] mb-2 block"
             style={{ color: TEMPO.textDim }}
           >
+            Description / sous-tâches
+          </label>
+          <textarea
+            placeholder="Ex : méditation, lecture, sport, douche froide…"
+            value={templateForm.description}
+            onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
+            rows={3}
+            className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none"
+            style={inputStyle}
+          />
+          <p className="text-[10px] mt-1.5" style={{ color: TEMPO.textMuted }}>
+            Pré-remplit les notes à chaque insertion. Idéal pour les routines.
+          </p>
+        </div>
+
+        <div className="mb-4">
+          <label
+            className="text-[10px] uppercase tracking-[0.22em] mb-2 block"
+            style={{ color: TEMPO.textDim }}
+          >
             Durée par défaut
           </label>
           <div className="relative">

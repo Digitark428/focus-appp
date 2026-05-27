@@ -7,7 +7,7 @@ export default function GoalProgress() {
   if (dailyGoal.percent === 0 && weeklyGoal.percent === 0) return null;
 
   return (
-    <div className="space-y-4 mb-8">
+    <div className="space-y-4 mb-8 lg:mb-0 lg:transition-transform lg:hover:-translate-y-[1px]">
       {/* Progression journée — accent doré */}
       <div>
         <div className="flex items-baseline justify-between mb-2">

@@ -73,7 +73,7 @@ export default function MainScreen() {
       ════════════════════════════════════════════════════════════ */}
       <div
         className="
-          relative z-10 mx-auto pt-14
+          relative z-10 mx-auto pt-10 lg:pt-14
           px-6 max-w-md
           lg:px-10 lg:max-w-[1280px]
         "
@@ -88,14 +88,21 @@ export default function MainScreen() {
         {/* Grid desktop / stack mobile */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
           {/* ── Colonne gauche (desktop) ───────────────────────── */}
-          <div className="lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
+          <div className="lg:col-span-3 lg:sticky lg:top-6 lg:self-start lg:space-y-6">
             <WeekSelector />
             <GoalProgress />
+            <AmbientSoundPicker desktopSlot />
           </div>
 
           {/* ── Colonne centrale (desktop) ─────────────────────── */}
           <div className="lg:col-span-5 lg:flex lg:flex-col lg:items-center">
-            {isRunning && <AmbientSoundPicker />}
+            {/* Mobile : musique sous le timer pendant la journée (préservé tel quel).
+                Desktop : musique migrée dans la colonne gauche → on masque ici. */}
+            {isRunning && (
+              <div className="lg:hidden w-full">
+                <AmbientSoundPicker />
+              </div>
+            )}
             <MainTimerRing />
             <StartDayButton />
           </div>

@@ -11,24 +11,25 @@ export default function MainHeader() {
   const firstName = user?.firstName || "";
 
   return (
-    <header className="flex items-start justify-between mb-8">
+    <header className="flex items-start justify-between mb-6 lg:mb-8">
       <button onClick={handleLogoTap} className="text-left flex items-center gap-3">
-        <TempoLogoMini size={40} />
+        <TempoLogoMini size={36} className="lg:hidden" />
+        <TempoLogoMini size={40} className="hidden lg:block" />
         <div>
           <h1
-            className="text-3xl tracking-tight leading-none"
+            className="text-[26px] lg:text-3xl tracking-tight leading-none"
             style={{ fontWeight: 300, letterSpacing: "-0.02em", color: TEMPO.text }}
           >
             Tempo<span style={{ color: TEMPO.gold }}>.</span>
           </h1>
           <p
-            className="text-[10px] mt-1.5 uppercase"
+            className="text-[10px] mt-1 lg:mt-1.5 uppercase"
             style={{ color: TEMPO.textDim, letterSpacing: "0.18em" }}
           >
             {now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
           </p>
           {firstName && (
-            <p className="text-[11px] mt-1 font-light" style={{ color: TEMPO.gold + "cc" }}>
+            <p className="text-[11px] mt-0.5 lg:mt-1 font-light" style={{ color: TEMPO.gold + "cc" }}>
               {greeting}, {firstName}
             </p>
           )}
@@ -40,7 +41,7 @@ export default function MainHeader() {
             Stop propagation pour ne pas ouvrir le menu. */}
         <label
           onClick={(e) => e.stopPropagation()}
-          className="cursor-pointer w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium transition hover:scale-[1.05]"
+          className="cursor-pointer w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium transition hover:scale-[1.05]"
           style={{
             background: TEMPO.gold + "25",
             border: `1px solid ${TEMPO.gold}55`,

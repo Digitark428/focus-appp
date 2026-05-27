@@ -35,7 +35,7 @@ export default function TaskCard({ task }) {
       onTouchStart={(e) => startLongPress(task, e.touches[0].clientY)}
       onTouchEnd={cancelLongPress}
       onTouchCancel={cancelLongPress}
-      className={`group relative rounded-2xl overflow-hidden border transition-all select-none ${
+      className={`group relative rounded-2xl overflow-hidden border transition-all select-none lg:hover:-translate-y-[1px] lg:hover:shadow-[0_10px_30px_rgba(0,0,0,0.45)] ${
         isDragging
           ? "scale-[1.03] z-20 opacity-90"
           : isDropTarget
@@ -52,6 +52,10 @@ export default function TaskCard({ task }) {
         boxShadow: isCurrent
           ? `0 8px 28px rgba(0,0,0,0.4), 0 0 24px ${task.color}25, inset 0 1px 0 ${TEMPO.gold}20`
           : "0 4px 14px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.03)",
+        ...(isCurrent && !isDragging && !isDropTarget && {
+          "--tempo-active-color": `${task.color}55`,
+          animation: "active-task-glow 3.6s ease-in-out infinite",
+        }),
         ...(isDropTarget && {
           borderColor: task.color + "80",
           boxShadow: `0 0 24px ${task.color}40, inset 0 0 0 2px ${task.color}50`,
@@ -112,7 +116,7 @@ export default function TaskCard({ task }) {
           if (dragState) return;
           setExpandedId(isExpanded ? null : task.id);
         }}
-        className="relative w-full flex items-center gap-3 p-4 min-h-[72px] text-left"
+        className="relative w-full flex items-center gap-3 lg:gap-4 p-4 lg:py-3 lg:px-5 min-h-[72px] lg:min-h-[64px] text-left"
       >
         {/* Drag handle */}
         <div

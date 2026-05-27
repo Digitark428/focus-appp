@@ -239,10 +239,10 @@ export default function AddEditTaskModal() {
 
           <div>
             <label className="text-xs mb-1 block" style={{ color: TEMPO.textDim }}>
-              Notes / sous-tâches
+              Description / sous-tâches
             </label>
             <textarea
-              placeholder="Ajoutez des notes, sous-tâches, rappels..."
+              placeholder="Ex : méditation, lecture, sport, douche froide…"
               value={taskForm.notes}
               onChange={(e) => setTaskForm({ ...taskForm, notes: e.target.value })}
               rows={3}

@@ -11,14 +11,14 @@ export default function StartDayButton() {
   if (isRunning || pausedAt) return null;
 
   return (
-    <div className="mt-10 mb-4 flex flex-col items-center">
+    <div className="mt-6 lg:mt-10 mb-4 flex flex-col items-center">
       <button
         onClick={() => {
           if (sortedTasks.length === 0) setShowNoTasksWarning(true);
           else startDay();
         }}
         data-tour="startBtn"
-        className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        className="group relative w-full overflow-hidden rounded-2xl px-6 py-4 lg:py-5 transition-all hover:scale-[1.01] active:scale-[0.99]"
         style={{
           background: TEMPO_GRADIENTS.cardAccent,
           border: `1px solid ${TEMPO.gold}40`,
@@ -38,8 +38,8 @@ export default function StartDayButton() {
         />
 
         <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 flex items-center justify-center">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="relative w-11 h-11 lg:w-12 lg:h-12 flex items-center justify-center">
               <span
                 className="absolute inset-0 rounded-full animate-ping opacity-25"
                 style={{ background: TEMPO.gold, animationDuration: "3s" }}

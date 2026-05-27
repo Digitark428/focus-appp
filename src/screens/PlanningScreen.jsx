@@ -117,7 +117,7 @@ export default function PlanningScreen() {
         </div>
 
         {/* Liste des jours — colonne unique sur mobile, grille 2 colonnes sur desktop */}
-        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
+        <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
           {activeDayThemes.map((theme, dayIdx) => {
             const tasks = [...(weekTasks[dayIdx] || [])].sort(
               (a, b) => toMin(a.start) - toMin(b.start),
@@ -130,7 +130,7 @@ export default function PlanningScreen() {
             return (
               <div
                 key={dayIdx}
-                className="rounded-2xl border p-4"
+                className="rounded-2xl border p-3 lg:p-4"
                 style={{
                   background: "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",
                   borderColor: TEMPO.border,
@@ -139,7 +139,7 @@ export default function PlanningScreen() {
                 {/* Header jour — cliquable pour basculer vers le dashboard du jour */}
                 <button
                   onClick={() => jumpToDay(dayIdx)}
-                  className="w-full flex items-center justify-between mb-3 transition hover:opacity-90 text-left"
+                  className="w-full flex items-center justify-between mb-2 lg:mb-3 transition hover:opacity-90 text-left"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
@@ -246,7 +246,7 @@ export default function PlanningScreen() {
                                   task: f, dayIdx, isFloating: true,
                                   status: fIsDone ? "done" : null,
                                 })}
-                                className="text-[10px] px-2 py-1 rounded-full transition hover:scale-105 active:scale-95 flex items-center gap-1"
+                                className="text-[9px] lg:text-[10px] px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-full transition hover:scale-105 active:scale-95 flex items-center gap-1"
                                 style={{
                                   background: fIsDone ? SUCCESS_SOFT + "14" : (f.color || "#E2B872") + "15",
                                   border: `1px solid ${fIsDone ? SUCCESS_SOFT + "40" : (f.color || "#E2B872") + "30"}`,

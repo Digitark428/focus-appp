@@ -54,7 +54,7 @@ export default function FloatingTasksSection() {
           </h3>
           {floatingTasks.length > 0 && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full font-mono"
+              className="text-[9px] lg:text-[10px] px-1.5 py-0.5 rounded-full font-mono"
               style={{ background: FLOAT + "22", color: FLOAT }}
             >
               {floatingTasks.length}
@@ -105,7 +105,7 @@ export default function FloatingTasksSection() {
                     openFloatingDetail(task);
                   }
                 }}
-                className="relative overflow-hidden rounded-2xl border flex items-center gap-3 px-4 py-3.5 group cursor-pointer transition hover:bg-white/[0.02]"
+                className="relative overflow-hidden rounded-2xl border flex items-center gap-2.5 lg:gap-3 px-3 py-2.5 lg:px-4 lg:py-3.5 group cursor-pointer transition hover:bg-white/[0.02]"
                 style={{
                   background: isDone
                     ? `linear-gradient(135deg, ${SUCCESS_SOFT}10 0%, ${SUCCESS_SOFT}03 100%)`
@@ -158,7 +158,7 @@ export default function FloatingTasksSection() {
                 </div>
 
                 <span
-                  className="text-[10px] px-2 py-0.5 rounded-full shrink-0"
+                  className="text-[9px] lg:text-[10px] px-1.5 py-0.5 lg:px-2 rounded-full shrink-0"
                   style={{
                     background: accent + "18",
                     color: accent,

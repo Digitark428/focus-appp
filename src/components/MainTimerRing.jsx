@@ -35,7 +35,7 @@ export default function MainTimerRing() {
   const particleCount = Math.max(1, Math.floor(1 + eased * 249));
 
   return (
-    <div className="flex flex-col items-center mb-3">
+    <div className="flex flex-col items-center mb-3 lg:mb-0 w-full">
       <div className="relative w-72 h-72">
         {/* Halo doré derrière l'anneau */}
         <div
@@ -224,6 +224,76 @@ export default function MainTimerRing() {
           En pause
         </p>
       )}
+
+      {/* ── V11 · Bloc contextuel desktop sous le timer ─────────────
+          Trois micro-infos discrètes : tâche actuelle, temps restant,
+          prochaine tâche. Masqué sur mobile pour préserver l'épure. */}
+      <div className="hidden lg:flex mt-6 w-full max-w-sm items-stretch gap-2">
+        <div
+          className="flex-1 rounded-xl px-3 py-2.5 border"
+          style={{
+            background: "rgba(255,255,255,0.025)",
+            borderColor: TEMPO.border,
+          }}
+        >
+          <p
+            className="text-[9px] uppercase tracking-[0.2em] mb-1"
+            style={{ color: TEMPO.textMuted }}
+          >
+            En cours
+          </p>
+          <p
+            className="text-xs truncate"
+            style={{ color: currentTask ? currentTask.color : TEMPO.textDim }}
+          >
+            {currentTask ? currentTask.name : "—"}
+          </p>
+        </div>
+        <div
+          className="flex-1 rounded-xl px-3 py-2.5 border"
+          style={{
+            background: "rgba(255,255,255,0.025)",
+            borderColor: TEMPO.border,
+          }}
+        >
+          <p
+            className="text-[9px] uppercase tracking-[0.2em] mb-1"
+            style={{ color: TEMPO.textMuted }}
+          >
+            Restant
+          </p>
+          <p
+            className="text-xs font-mono tabular-nums"
+            style={{ color: TEMPO.text }}
+          >
+            {currentTask
+              ? formatTime(remainingSec)
+              : nextTask
+                ? formatTime(countdownSec)
+                : "—"}
+          </p>
+        </div>
+        <div
+          className="flex-1 rounded-xl px-3 py-2.5 border"
+          style={{
+            background: "rgba(255,255,255,0.025)",
+            borderColor: TEMPO.border,
+          }}
+        >
+          <p
+            className="text-[9px] uppercase tracking-[0.2em] mb-1"
+            style={{ color: TEMPO.textMuted }}
+          >
+            Prochaine
+          </p>
+          <p
+            className="text-xs truncate"
+            style={{ color: nextTask ? TEMPO.text : TEMPO.textDim }}
+          >
+            {nextTask ? nextTask.name : "—"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -75,7 +75,7 @@ export function FocusProvider({ children }) {
   const [showCustomTaskEditor, setShowCustomTaskEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [templateForm, setTemplateForm] = useState({
-    name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap",
+    name: "", description: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap",
   });
 
   // ── Floating task completions (par jour) ─────────────────────────────────
@@ -702,7 +702,7 @@ export function FocusProvider({ children }) {
     setAddFlowMode(null);
     setShowAdd(false);
     setEditingTemplate(null);
-    setTemplateForm({ name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
+    setTemplateForm({ name: "", description: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
     setShowCustomTaskEditor(true);
   };
 
@@ -938,12 +938,18 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   const openNewTemplate = () => {
     setEditingTemplate(null);
-    setTemplateForm({ name: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
+    setTemplateForm({ name: "", description: "", color: "#D9B36A", durationMin: 30, iconKey: "Zap" });
     setShowCustomTaskEditor(true);
   };
   const openEditTemplate = (tpl) => {
     setEditingTemplate(tpl);
-    setTemplateForm({ name: tpl.name, color: tpl.color, durationMin: tpl.durationMin, iconKey: tpl.iconKey });
+    setTemplateForm({
+      name: tpl.name,
+      description: tpl.description || "",
+      color: tpl.color,
+      durationMin: tpl.durationMin,
+      iconKey: tpl.iconKey,
+    });
     setShowCustomTaskEditor(true);
   };
   const saveTemplate = () => {
@@ -977,7 +983,7 @@ export function FocusProvider({ children }) {
     setPickedCategory(null);
     setTaskForm({
       name: tpl.name, start: suggestedStart, end: suggestedEnd,
-      notes: "", meditationId: null, category: null, subcategory: null,
+      notes: tpl.description || "", meditationId: null, category: null, subcategory: null,
       customIconKey: tpl.iconKey, customColor: tpl.color,
     });
     setAddFlowMode("custom");

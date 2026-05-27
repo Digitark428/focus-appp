@@ -2,15 +2,25 @@ import { Headphones, Upload, X } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TEMPO } from "../utils/tempoTheme";
 
-export default function AmbientSoundPicker() {
+// ============================================================
+//  AmbientSoundPicker
+//  - Sans prop (mobile par défaut) : rendu en flux, masqué sur
+//    desktop pour éviter le doublon avec le slot dédié.
+//  - Avec desktopSlot=true : rendu uniquement sur desktop dans
+//    la colonne gauche du MainScreen (toujours visible, même
+//    journée non démarrée).
+// ============================================================
+export default function AmbientSoundPicker({ desktopSlot = false }) {
   const {
     activeCustomTrack, ambientVolume, setAmbientVolume,
     customTracks, activateCustom,
     handleMusicUpload, removeCustomTrack,
   } = useFocus();
 
+  const wrapperCls = desktopSlot ? "hidden lg:block mb-0" : "mb-6 lg:hidden";
+
   return (
-    <div className="mb-6">
+    <div className={wrapperCls}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: TEMPO.textDim }}>
           Musique
@@ -25,22 +35,31 @@ export default function AmbientSoundPicker() {
         )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto -mx-6 px-6 pb-2 no-scrollbar">
+      <div
+        className={
+          desktopSlot
+            ? "flex flex-col gap-2"
+            : "flex gap-2 overflow-x-auto -mx-6 px-6 pb-2 no-scrollbar"
+        }
+      >
         {customTracks.map((track) => {
           const isActive = activeCustomTrack === track.id;
           return (
             <div
               key={track.id}
-              className="shrink-0 flex items-center gap-1 rounded-full border transition-all"
+              className={`${desktopSlot ? "w-full" : "shrink-0"} flex items-center gap-1 rounded-full border transition-all`}
               style={{
                 background: isActive ? TEMPO.gold + "20" : "rgba(255,255,255,0.025)",
                 borderColor: isActive ? TEMPO.gold + "60" : TEMPO.border,
               }}
             >
-              <button onClick={() => activateCustom(track.id)} className="flex items-center gap-2 pl-4 pr-2 py-2.5">
+              <button
+                onClick={() => activateCustom(track.id)}
+                className={`flex items-center gap-2 pl-4 pr-2 py-2.5 ${desktopSlot ? "flex-1 min-w-0" : ""}`}
+              >
                 <Headphones size={14} style={{ color: isActive ? TEMPO.gold : TEMPO.textDim }} />
                 <span
-                  className="text-xs max-w-[140px] truncate"
+                  className={`text-xs truncate ${desktopSlot ? "flex-1" : "max-w-[140px]"}`}
                   style={{ color: isActive ? TEMPO.gold : TEMPO.text + "b0" }}
                 >
                   {track.name}
@@ -65,7 +84,7 @@ export default function AmbientSoundPicker() {
         })}
 
         <label
-          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-dashed transition cursor-pointer hover:bg-white/5"
+          className={`${desktopSlot ? "w-full justify-center" : "shrink-0"} flex items-center gap-2 px-4 py-2.5 rounded-full border border-dashed transition cursor-pointer hover:bg-white/5`}
           style={{ borderColor: TEMPO.borderStrong }}
         >
           <Upload size={14} style={{ color: TEMPO.textDim }} />
