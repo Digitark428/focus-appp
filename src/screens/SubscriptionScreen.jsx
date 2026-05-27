@@ -33,7 +33,13 @@ export default function SubscriptionScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14 pb-8">
+      <div
+        className="
+          relative z-10 mx-auto pt-14 pb-8
+          px-6 max-w-md
+          lg:px-10 lg:max-w-3xl
+        "
+      >
         <header className="flex items-center justify-between mb-8">
           {!forced ? (
             <button

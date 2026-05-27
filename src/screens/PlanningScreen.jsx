@@ -54,7 +54,14 @@ export default function PlanningScreen() {
         />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-6 pt-14" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}>
+      <div
+        className="
+          relative z-10 mx-auto pt-14
+          px-6 max-w-md
+          lg:px-10 lg:max-w-6xl
+        "
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}
+      >
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <button
@@ -109,8 +116,8 @@ export default function PlanningScreen() {
           </p>
         </div>
 
-        {/* Liste des jours */}
-        <div className="space-y-4">
+        {/* Liste des jours — colonne unique sur mobile, grille 2 colonnes sur desktop */}
+        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
           {activeDayThemes.map((theme, dayIdx) => {
             const tasks = [...(weekTasks[dayIdx] || [])].sort(
               (a, b) => toMin(a.start) - toMin(b.start),

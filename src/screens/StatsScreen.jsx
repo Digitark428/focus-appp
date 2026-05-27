@@ -31,7 +31,11 @@ export default function StatsScreen() {
       </div>
 
       <div
-        className="relative z-10 max-w-md mx-auto px-6 pt-14"
+        className="
+          relative z-10 mx-auto pt-14
+          px-6 max-w-md
+          lg:px-10 lg:max-w-5xl
+        "
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8rem)" }}
       >
         <header className="flex items-center justify-between mb-8">
@@ -54,7 +58,7 @@ export default function StatsScreen() {
         </header>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="rounded-2xl p-4" style={cardStyle}>
             <div
               className="flex items-center gap-2 text-[10px] uppercase tracking-wider mb-2"

@@ -58,21 +58,54 @@ export default function MainScreen() {
 
       <CurrentTaskTopBar />
 
+      {/* ════════════════════════════════════════════════════════════
+          Layout responsive :
+          • < lg (téléphone / tablette portrait) → colonne unique max-w-md,
+            comportement actuel strictement préservé.
+          • ≥ lg (desktop) → grille 3 colonnes :
+              ┌─────────────┬──────────────────┬─────────────┐
+              │ Header      │  Timer ring      │ Timeline    │
+              │ Week        │  Ambient picker  │ Floating    │
+              │ Goal        │  Start day btn   │ tasks       │
+              └─────────────┴──────────────────┴─────────────┘
+          Aucun composant n'est dupliqué : ils sont juste réorganisés
+          via grid sans toucher à leur logique interne.
+      ════════════════════════════════════════════════════════════ */}
       <div
-        className="relative z-10 max-w-md mx-auto px-6 pt-14"
+        className="
+          relative z-10 mx-auto pt-14
+          px-6 max-w-md
+          lg:px-10 lg:max-w-[1280px]
+        "
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 9rem)" }}
       >
+        {/* Bandeaux globaux (toujours pleine largeur) */}
         <MainHeader />
         <TrialBanner />
         <ConflictsBanner />
-        <WeekSelector />
-        <GoalProgress />
-        {isRunning && <AmbientSoundPicker />}
         <DemoBanner />
-        <MainTimerRing />
-        <Timeline />
-        <FloatingTasksSection />
-        <StartDayButton />
+
+        {/* Grid desktop / stack mobile */}
+        <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
+          {/* ── Colonne gauche (desktop) ───────────────────────── */}
+          <div className="lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
+            <WeekSelector />
+            <GoalProgress />
+          </div>
+
+          {/* ── Colonne centrale (desktop) ─────────────────────── */}
+          <div className="lg:col-span-5 lg:flex lg:flex-col lg:items-center">
+            {isRunning && <AmbientSoundPicker />}
+            <MainTimerRing />
+            <StartDayButton />
+          </div>
+
+          {/* ── Colonne droite (desktop) ───────────────────────── */}
+          <div className="lg:col-span-4">
+            <Timeline />
+            <FloatingTasksSection />
+          </div>
+        </div>
 
         {/* Modals & dialogs */}
         <AddTaskTypeChooser />
