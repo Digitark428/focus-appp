@@ -1,83 +1,68 @@
-# Focus 🎯
+# Piscine Island — Site Web
 
-Application de planification quotidienne propulsée par DIGIT'ARK.
+Site one-page premium pour **Piscine Island**, spécialiste de la rénovation, l'entretien et la pose de membrane armée à La Réunion.
 
----
+## 🌊 Aperçu
 
-## 🚀 Mettre en ligne en 15 minutes (gratuit)
+Site vitrine élégant, sombre et minimaliste, dans un esprit haut de gamme inspiré de l'architecture de luxe.
 
-Tu n'as **rien besoin d'installer sur ton ordi**. Tout se fait dans le navigateur.
+**Sections** :
+- Hero d'introduction
+- À propos & capacités essentielles
+- 8 services
+- Membrane armée (spécialité signature)
+- Méthode A à Z
+- Témoignage client
+- Contact & fondateur
 
-### Étape 1 — Créer un compte GitHub (5 min)
+## 📁 Structure
 
-1. Va sur **https://github.com**
-2. Clique sur **Sign up** (en haut à droite)
-3. Choisis un email, un mot de passe, un nom d'utilisateur
-4. Confirme ton email
+```
+piscine-island/
+├── index.html        # Site complet (HTML + CSS + JS inline)
+├── assets/
+│   ├── logo.png      # Logo Piscine Island (transparent)
+│   └── wilfried.jpg  # Photo fondateur (section contact)
+└── README.md
+```
 
-### Étape 2 — Créer un dépôt (repository) GitHub
+## 🚀 Mise en ligne
 
-1. Une fois connecté, clique sur le **+** en haut à droite, puis **New repository**
-2. Nomme-le par exemple `focus-app`
-3. Choisis **Public**
-4. Clique sur **Create repository**
-5. Sur la page suivante, clique sur **uploading an existing file** (lien bleu)
-6. **Glisse-dépose tous les fichiers et dossiers** de ce projet (sauf `node_modules` s'il existe)
-   - Important : il faut bien tout déposer : `package.json`, `vite.config.js`, le dossier `src/`, le dossier `public/`, etc.
-7. Tout en bas de la page, clique sur **Commit changes**
+### Option 1 — GitHub Pages
+1. Push ce dossier sur un repo GitHub.
+2. **Settings → Pages → Source : Deploy from branch → `main` / root**.
+3. Le site sera accessible à `https://<utilisateur>.github.io/<repo>/`.
 
-### Étape 3 — Créer un compte Vercel (2 min)
+### Option 2 — Hébergement classique
+Upload tous les fichiers (`index.html` + dossier `assets/`) à la racine de votre hébergeur via FTP.
 
-1. Va sur **https://vercel.com**
-2. Clique sur **Sign Up**
-3. Choisis **Continue with GitHub**
-4. Autorise Vercel à accéder à ton GitHub
+### Option 3 — Test local
+Ouvrir simplement `index.html` dans un navigateur.
 
-### Étape 4 — Déployer ! (3 min)
+## 🎨 Direction artistique
 
-1. Une fois sur Vercel, clique sur **Add New...** puis **Project**
-2. Tu verras la liste de tes dépôts GitHub. Trouve `focus-app` et clique sur **Import**
-3. Laisse tous les paramètres par défaut (Vercel détecte tout seul que c'est du Vite)
-4. Clique sur **Deploy**
-5. Attends 1-2 minutes... c'est en ligne ! 🎉
+- **Palette** : noir profond `#050505` + or `#c4a96b`
+- **Typographies** : Cormorant Garamond (titres) + Montserrat (texte)
+- **Style** : architectural, premium, minimaliste
 
-Vercel te donne un lien du genre `focus-app-xxx.vercel.app` que tu peux envoyer à tes amis.
+## ✏️ Modifications courantes
 
----
+### Changer la photo du fondateur
+Remplacer `assets/wilfried.jpg` par une nouvelle image (garder le même nom de fichier, ratio 4:5 recommandé).
 
-## 📱 Comment tes amis peuvent l'utiliser comme une vraie app
+### Modifier les textes
+Tout est dans `index.html`. Les sections sont clairement balisées par des commentaires HTML.
 
-**Sur iPhone (Safari) :**
-1. Ouvrir le lien dans Safari
-2. Toucher l'icône de partage (carré avec flèche vers le haut)
-3. Choisir "Sur l'écran d'accueil"
-4. L'icône Focus apparaît comme une vraie app !
+### Coordonnées
+Rechercher `06.92.60.13.68`, `piscineisland@gmail.com`, `piscineisland.re` et `piscine_island` dans `index.html` pour les modifier.
 
-**Sur Android (Chrome) :**
-1. Ouvrir le lien dans Chrome
-2. Toucher les 3 points en haut à droite
-3. Choisir "Ajouter à l'écran d'accueil"
+## 📞 Contact Piscine Island
 
----
-
-## ⚠️ À savoir pour la version test
-
-- Les **données ne sont pas sauvegardées** entre les sessions (c'est un prototype)
-- Les **notifications push ne marchent pas** comme une vraie app
-- La **voix française** fonctionne bien
-- Les **musiques perso** fonctionnent durant la session
-
-C'est parfait pour récolter des avis sur le **design et l'expérience** !
+- **Téléphone / WhatsApp** : 06.92.60.13.68
+- **Email** : piscineisland@gmail.com
+- **Site** : [piscineisland.re](https://www.piscineisland.re)
+- **Instagram** : [@piscine_island](https://www.instagram.com/piscine_island)
 
 ---
 
-## 🛠️ Modifier le code plus tard
-
-Si tu veux faire des modifications :
-1. Modifie le fichier sur GitHub directement (clique dessus, puis sur l'icône crayon)
-2. Vercel redéploie automatiquement à chaque modification
-3. Le lien reste le même
-
----
-
-Propulsé par **DIGIT'ARK.**
+© 2025 Piscine Island · La Réunion

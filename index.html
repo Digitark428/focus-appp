@@ -1,21 +1,886 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#071326" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Tempo" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Tempo — Reprenez le contrôle de votre journée." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/tempo-logo.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Tempo.</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piscine Island — Expertise · Rénovation · Entretien</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #050505;
+  --dark: #0a0a0a;
+  --dark2: #111111;
+  --dark3: #181818;
+  --white: #f5f2ee;
+  --cream: #e8e0d4;
+  --gold: #c4a96b;
+  --gold-light: #d8c193;
+  --gold-soft: rgba(196,169,107,0.7);
+  --text-muted: rgba(245,242,238,0.5);
+  --text-secondary: rgba(245,242,238,0.78);
+  --border: rgba(196,169,107,0.2);
+  --border-light: rgba(245,242,238,0.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--black);
+  color:var(--white);
+  font-family:'Montserrat',sans-serif;
+  font-weight:400;
+  font-size:16px;
+  line-height:1.65;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── CURSOR ───────────────────────────── */
+.cursor{width:6px;height:6px;background:var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;}
+.cursor-ring{width:32px;height:32px;border:1px solid rgba(196,169,107,0.4);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s;}
+
+/* ─── NAV ──────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:24px 56px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:all .55s cubic-bezier(.16,1,.3,1);
+}
+nav.scrolled{
+  padding:16px 56px;
+  background:rgba(5,5,5,0.88);
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{display:block;line-height:0;}
+.nav-logo img{
+  height:64px;
+  display:block;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.45));
+  transition:height .45s, filter .4s;
+}
+nav.scrolled .nav-logo img{height:52px;}
+.nav-links{display:flex;gap:42px;list-style:none;}
+.nav-links a{
+  color:var(--text-secondary);text-decoration:none;
+  font-size:11px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;
+  transition:color .3s;
+  position:relative;
+}
+.nav-links a::after{
+  content:'';position:absolute;bottom:-7px;left:0;
+  width:0;height:1px;background:var(--gold);
+  transition:width .35s ease;
+}
+.nav-links a:hover{color:var(--gold);}
+.nav-links a:hover::after{width:100%;}
+.nav-cta{
+  padding:13px 28px;border:1px solid var(--gold);
+  color:var(--gold);font-size:10px;font-weight:500;
+  letter-spacing:.26em;text-transform:uppercase;text-decoration:none;
+  transition:all .35s;
+}
+.nav-cta:hover{background:var(--gold);color:var(--black);}
+.hamburger{display:none;flex-direction:column;gap:6px;cursor:pointer;background:none;border:none;padding:4px;z-index:1100;}
+.hamburger span{display:block;width:28px;height:1.5px;background:var(--white);transition:all .4s;}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+.mobile-menu{
+  display:none;position:fixed;inset:0;background:rgba(5,5,5,.97);
+  backdrop-filter:blur(20px);
+  z-index:1050;flex-direction:column;align-items:center;justify-content:center;gap:36px;
+  opacity:0;transition:opacity .4s;
+}
+.mobile-menu.open{opacity:1;}
+.mobile-menu a{
+  color:var(--white);text-decoration:none;
+  font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:400;
+  transition:color .3s;
+}
+.mobile-menu a:hover{color:var(--gold);}
+
+/* ─── HERO ─────────────────────────────── */
+#hero{
+  position:relative;
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:140px 56px 100px;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(196,169,107,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(196,169,107,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
+}
+/* subtle pattern overlay */
+#hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(90deg, rgba(196,169,107,0.025) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(196,169,107,0.025) 1px, transparent 1px);
+  background-size:80px 80px;
+  pointer-events:none;
+  mask-image:radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+.hero-content{
+  position:relative;z-index:2;
+  text-align:center;
+  max-width:1100px;
+  width:100%;
+}
+.hero-eyebrow{
+  font-size:11px;
+  letter-spacing:.5em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:38px;
+  display:inline-flex;align-items:center;gap:18px;
+  font-weight:500;
+  opacity:0;transform:translateY(20px);
+  animation:fadeUp 1s .3s forwards;
+}
+.hero-eyebrow::before,.hero-eyebrow::after{
+  content:'';display:block;width:42px;height:1px;background:var(--gold);
+}
+.hero-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(54px, 9vw, 130px);
+  font-weight:400;
+  line-height:.96;
+  letter-spacing:-.018em;
+  margin-bottom:44px;
+}
+.hero-title .line{display:block;overflow:hidden;}
+.hero-title .line span{
+  display:inline-block;
+  opacity:0;transform:translateY(100%);
+  transition:transform 1.2s cubic-bezier(.16,1,.3,1), opacity 1.1s cubic-bezier(.16,1,.3,1);
+}
+.hero-title em{
+  font-style:italic;
+  color:var(--gold-light);
+  font-weight:500;
+}
+.hero-title.revealed .line:nth-child(1) span{opacity:1;transform:none;transition-delay:.5s;}
+.hero-title.revealed .line:nth-child(2) span{opacity:1;transform:none;transition-delay:.7s;}
+.hero-title.revealed .line:nth-child(3) span{opacity:1;transform:none;transition-delay:.9s;}
+
+.hero-sub{
+  font-size:13px;
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--text-secondary);
+  margin-bottom:68px;
+  font-weight:500;
+  opacity:0;transform:translateY(20px);
+  animation:fadeUp 1s 1.3s forwards;
+}
+.hero-btns{
+  display:flex;gap:20px;justify-content:center;flex-wrap:wrap;
+  opacity:0;transform:translateY(20px);
+  animation:fadeUp 1s 1.5s forwards;
+}
+.btn-gold{
+  padding:18px 44px;background:var(--gold);
+  color:var(--black);font-size:11px;font-weight:600;
+  letter-spacing:.3em;text-transform:uppercase;text-decoration:none;
+  transition:all .4s;display:inline-block;
+  box-shadow:0 10px 36px rgba(196,169,107,.18);
+}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 16px 48px rgba(196,169,107,.32);}
+.btn-line{
+  padding:18px 44px;border:1px solid rgba(245,242,238,.4);
+  color:var(--white);font-size:11px;font-weight:500;
+  letter-spacing:.3em;text-transform:uppercase;text-decoration:none;
+  transition:all .4s;display:inline-block;
+}
+.btn-line:hover{border-color:var(--gold);color:var(--gold);}
+
+/* hero bottom indicator */
+.hero-foot{
+  position:absolute;bottom:36px;left:50%;
+  transform:translateX(-50%);z-index:3;
+  font-size:9.5px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--text-muted);
+  display:flex;align-items:center;gap:14px;
+  opacity:0;
+  animation:fadeUp 1s 1.8s forwards;
+}
+.hero-foot::before,.hero-foot::after{content:'';display:block;width:32px;height:1px;background:rgba(196,169,107,0.3);}
+
+@keyframes fadeUp{to{opacity:1;transform:none;}}
+
+/* ─── SHARED ─────────────────────────── */
+.s-label{
+  font-size:11px;letter-spacing:.42em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:28px;
+  display:flex;align-items:center;gap:16px;
+  font-weight:500;
+}
+.s-label::before{content:'';display:block;width:42px;height:1px;background:var(--gold);}
+.s-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(42px, 5.5vw, 84px);
+  font-weight:400;line-height:1.05;
+  margin-bottom:36px;
+  letter-spacing:-.012em;
+}
+.s-title strong{font-weight:600;}
+.s-title em{font-style:italic;color:var(--gold-light);font-weight:500;}
+.s-body{
+  font-size:16px;
+  line-height:1.85;
+  color:var(--text-secondary);
+  margin-bottom:24px;
+  font-weight:400;
+  max-width:600px;
+}
+.gold-divider{width:64px;height:1px;background:var(--gold);display:block;margin:36px auto;}
+
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1);}
+.reveal.visible{opacity:1;transform:none;}
+.d1{transition-delay:.1s;}.d2{transition-delay:.2s;}.d3{transition-delay:.3s;}.d4{transition-delay:.4s;}
+
+section{position:relative;}
+
+/* ─── ABOUT ──────────────────────────── */
+#about{
+  padding:180px 56px;
+  max-width:1320px;margin:0 auto;
+}
+.about-layout{
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:120px;
+  align-items:start;
+}
+.about-right{display:flex;flex-direction:column;gap:48px;}
+.capabilities{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:36px 48px;
+  padding-top:48px;
+  border-top:1px solid var(--border);
+  margin-top:8px;
+}
+.cap-item{
+  font-size:14px;
+  color:var(--text-secondary);
+  letter-spacing:.02em;
+  line-height:1.6;
+  position:relative;
+  padding-left:24px;
+  font-weight:400;
+}
+.cap-item::before{
+  content:'';position:absolute;left:0;top:9px;
+  width:10px;height:1px;background:var(--gold);
+}
+.cap-item strong{color:var(--white);font-weight:600;display:block;margin-bottom:4px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;}
+
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:48px;
+  margin-top:64px;
+  padding-top:64px;
+  border-top:1px solid var(--border);
+}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:400;color:var(--gold);line-height:1;display:block;letter-spacing:-.01em;}
+.stat-l{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted);margin-top:14px;display:block;font-weight:500;}
+
+/* ─── SERVICES ──────────────────────── */
+#services{padding:160px 56px;background:var(--dark);position:relative;overflow:hidden;}
+#services::before{
+  content:'SERVICES';
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cormorant Garamond',serif;font-size:300px;font-weight:300;
+  color:rgba(255,255,255,.012);pointer-events:none;white-space:nowrap;letter-spacing:-.04em;
+}
+.srv-header{max-width:1320px;margin:0 auto 96px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:end;position:relative;z-index:1;}
+.srv-grid{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;position:relative;z-index:1;}
+.srv-card{
+  background:linear-gradient(135deg, rgba(28,28,28,0.5) 0%, rgba(18,18,18,0.5) 100%);
+  border:1px solid var(--border-light);
+  border-radius:6px;
+  padding:44px 32px;
+  position:relative;overflow:hidden;
+  transition:all .55s cubic-bezier(.16,1,.3,1);cursor:default;
+  backdrop-filter:blur(10px);
+}
+.srv-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg, rgba(196,169,107,.08) 0%, transparent 60%);
+  opacity:0;transition:opacity .5s;
+}
+.srv-card::after{
+  content:'';position:absolute;
+  top:0;left:0;width:100%;height:1px;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity:0;transition:opacity .5s;
+}
+.srv-card:hover{
+  transform:translateY(-6px);
+  border-color:rgba(196,169,107,0.28);
+  box-shadow:0 26px 56px rgba(0,0,0,0.5);
+}
+.srv-card:hover::before{opacity:1;}
+.srv-card:hover::after{opacity:1;}
+.srv-ico{width:46px;height:46px;margin-bottom:28px;position:relative;}
+.srv-ico svg{width:100%;height:100%;stroke:var(--gold);fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
+.srv-num{position:absolute;top:0;right:0;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);letter-spacing:.04em;font-style:italic;font-weight:500;}
+.srv-bar{width:24px;height:1px;background:var(--gold);margin-bottom:22px;transition:width .4s;}
+.srv-card:hover .srv-bar{width:48px;}
+.srv-name{font-size:13px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;line-height:1.4;}
+.srv-desc{font-size:14px;line-height:1.7;color:var(--text-secondary);font-weight:400;}
+
+/* ─── MEMBRANE ──────────────────────── */
+#membrane{padding:180px 56px;max-width:1320px;margin:0 auto;}
+.mem-layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:120px;align-items:start;
+}
+.mem-right .s-label{margin-bottom:24px;}
+.mem-features{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+  margin-top:48px;
+  border-top:1px solid var(--border);
+}
+.mf{
+  padding:28px 0;
+  border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:48px 1fr;gap:24px;
+  align-items:start;
+  transition:padding-left .35s ease, border-color .35s ease;
+  cursor:default;
+}
+.mf:hover{padding-left:12px;border-bottom-color:rgba(196,169,107,0.4);}
+.mf-n{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px;color:var(--gold);
+  line-height:1;font-style:italic;
+  font-weight:500;
+}
+.mf-title{font-size:13px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px;line-height:1.4;}
+.mf-desc{font-size:14.5px;color:var(--text-secondary);line-height:1.7;font-weight:400;}
+.mem-tag{
+  display:inline-flex;align-items:center;gap:14px;
+  margin-top:36px;
+  background:linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color:var(--black);
+  padding:14px 28px;border-radius:2px;
+  font-size:10.5px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
+  box-shadow:0 10px 28px rgba(196,169,107,0.25);
+}
+.mem-tag::before{content:'';display:block;width:18px;height:1px;background:rgba(0,0,0,0.45);}
+
+/* ─── PROCESS ───────────────────────── */
+#process{padding:180px 56px;max-width:1320px;margin:0 auto;}
+.proc-header{text-align:center;margin-bottom:110px;}
+.proc-header .s-label{justify-content:center;}
+.proc-header .s-title{text-align:center;}
+.proc-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;}
+.proc-steps::before{
+  content:'';position:absolute;
+  top:42px;left:16%;right:16%;
+  height:1px;
+  background:linear-gradient(to right,var(--gold),rgba(196,169,107,.25),var(--gold));
+}
+.proc-step{padding:0 44px;text-align:center;}
+.proc-circle{
+  width:84px;height:84px;border:1px solid var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 36px;
+  font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);font-style:italic;
+  background:var(--black);position:relative;z-index:1;
+  box-shadow:0 0 0 10px var(--black), inset 0 0 32px rgba(196,169,107,0.06);
+  font-weight:500;
+}
+.proc-title{font-size:13px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;margin-bottom:18px;line-height:1.4;}
+.proc-desc{font-size:15px;color:var(--text-secondary);line-height:1.75;font-weight:400;}
+
+/* ─── TESTIMONIAL ───────────────────── */
+#testimonial{padding:180px 56px;background:var(--dark);text-align:center;position:relative;overflow:hidden;}
+#testimonial::before{
+  content:'"';
+  position:absolute;
+  top:64px;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',serif;
+  font-size:340px;line-height:0.7;
+  color:rgba(196,169,107,0.04);
+  pointer-events:none;
+}
+.testi-inner{max-width:920px;margin:0 auto;position:relative;z-index:1;}
+.quote-mark{
+  font-family:'Cormorant Garamond',serif;font-size:84px;
+  color:var(--gold);line-height:.5;opacity:.55;margin-bottom:36px;display:block;
+  font-style:italic;font-weight:500;
+}
+.quote-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(32px, 4vw, 56px);
+  font-weight:400;font-style:italic;line-height:1.35;margin-bottom:42px;
+  letter-spacing:-.008em;
+}
+.quote-attr{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);font-weight:500;}
+
+/* ─── CONTACT ───────────────────────── */
+#contact{
+  padding:180px 56px;
+  max-width:1320px;margin:0 auto;
+  display:grid;grid-template-columns:1.05fr 1fr;gap:110px;
+  align-items:center;
+}
+.contact-tagline{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(40px, 5vw, 78px);font-weight:400;line-height:1.05;margin-bottom:32px;
+  letter-spacing:-.012em;
+}
+.contact-tagline em{font-style:italic;color:var(--gold-light);font-weight:500;}
+.contact-body{font-size:16px;color:var(--text-secondary);line-height:1.85;margin-bottom:54px;font-weight:400;max-width:540px;}
+.cinfo{display:flex;flex-direction:column;gap:0;}
+.citem{
+  display:flex;align-items:center;gap:22px;
+  text-decoration:none;color:var(--white);
+  padding:22px 0;border-bottom:1px solid var(--border);
+  transition:color .3s, padding-left .3s;
+}
+.citem:hover{color:var(--gold);padding-left:10px;}
+.citem-icon{
+  width:42px;height:42px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border-radius:50%;
+  transition:border-color .3s, background .3s;
+}
+.citem:hover .citem-icon{border-color:var(--gold);background:rgba(196,169,107,0.05);}
+.citem-icon svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:1.5;}
+.citem-l{font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;font-weight:500;}
+.citem-v{font-size:15.5px;font-weight:500;letter-spacing:.01em;}
+
+.contact-imgwrap{
+  position:relative;
+  border-radius:6px;
+  overflow:hidden;
+  aspect-ratio:4/5;
+  box-shadow:0 32px 88px rgba(0,0,0,0.6), 0 0 0 1px rgba(196,169,107,0.12);
+}
+.contact-imgwrap img{
+  width:100%;height:100%;object-fit:cover;object-position:center top;
+  display:block;
+  transition:transform 1.4s cubic-bezier(.16,1,.3,1);
+}
+.contact-imgwrap:hover img{transform:scale(1.04);}
+.contact-imgwrap::before{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg, transparent 30%, rgba(5,5,5,0.4) 60%, rgba(5,5,5,0.95) 100%);
+  pointer-events:none;
+}
+.founder-info{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  padding:40px 40px 36px;
+  text-align:left;
+}
+.signature{
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px;color:var(--gold-light);
+  font-style:italic;
+  margin-bottom:12px;letter-spacing:.04em;
+  font-weight:400;
+}
+.f-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;font-weight:500;
+  margin-bottom:8px;letter-spacing:-.005em;
+  text-shadow:0 4px 24px rgba(0,0,0,0.5);
+  line-height:1.1;
+}
+.f-title{
+  font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);
+  display:flex;align-items:center;gap:14px;font-weight:600;
+}
+.f-title::before{content:'';display:block;width:28px;height:1px;background:var(--gold);}
+
+/* ─── FOOTER ────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:48px 56px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;
+  background:var(--black);
+}
+footer .nav-logo img{height:48px;opacity:.75;display:block;}
+.f-links{display:flex;gap:30px;list-style:none;}
+.f-links a{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;transition:color .3s;font-weight:500;}
+.f-links a:hover{color:var(--gold);}
+.f-copy{font-size:11px;color:var(--text-muted);letter-spacing:.12em;font-weight:400;}
+
+/* ─── RESPONSIVE ────────────────────── */
+@media(max-width:1024px){
+  .about-layout,.mem-layout,#contact{grid-template-columns:1fr;gap:64px;}
+  .srv-header{grid-template-columns:1fr;}
+  .srv-grid{grid-template-columns:repeat(2,1fr);}
+  .proc-steps{grid-template-columns:1fr;gap:48px;}
+  .proc-steps::before{display:none;}
+  .capabilities{grid-template-columns:1fr;gap:28px;}
+  nav,nav.scrolled{padding:18px 24px;}
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  .mobile-menu{display:flex;}
+  #hero,#about,#services,#membrane,#process,#testimonial,#contact{padding:100px 24px;}
+  footer{padding:36px 24px;}
+  .nav-logo img{height:54px;}
+  nav.scrolled .nav-logo img{height:44px;}
+}
+@media(max-width:600px){
+  body{font-size:15px;}
+  .srv-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr;gap:32px;}
+  .hero-title{font-size:46px;}
+  footer{flex-direction:column;text-align:center;}
+  .f-links{flex-wrap:wrap;justify-content:center;}
+  .cursor,.cursor-ring{display:none;}
+  .nav-logo img,nav.scrolled .nav-logo img{height:46px;}
+  #hero{padding:130px 22px 80px;}
+  .hero-eyebrow{font-size:9.5px;letter-spacing:.4em;}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="curRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#hero" class="nav-logo">
+    <img src="assets/logo.png" alt="Piscine Island">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">À propos</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#membrane">Membrane</a></li>
+    <li><a href="#process">Méthode</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a class="nav-cta" href="tel:0692601368">06.92.60.13.68</a>
+  <button class="hamburger" id="ham" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobMenu">
+  <a href="#about" class="mlink">À propos</a>
+  <a href="#services" class="mlink">Services</a>
+  <a href="#membrane" class="mlink">Membrane</a>
+  <a href="#process" class="mlink">Méthode</a>
+  <a href="#contact" class="mlink">Contact</a>
+  <a href="tel:0692601368" style="color:var(--gold);font-size:18px;font-family:'Montserrat',sans-serif;letter-spacing:.14em;">06.92.60.13.68</a>
+</div>
+
+<!-- ─── HERO ─────────────────────────── -->
+<section id="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">L'Architecture de l'eau</p>
+    <h1 class="hero-title" id="heroTitle">
+      <span class="line"><span>Transformez votre</span></span>
+      <span class="line"><span>piscine en</span></span>
+      <span class="line"><span><em>œuvre d'exception</em></span></span>
+    </h1>
+    <p class="hero-sub">Expertise &nbsp;·&nbsp; Rénovation &nbsp;·&nbsp; Entretien</p>
+    <div class="hero-btns">
+      <a class="btn-gold" href="#contact">Parlons de votre projet</a>
+      <a class="btn-line" href="#services">Nos services</a>
+    </div>
+  </div>
+  <div class="hero-foot">La Réunion · Depuis 2010</div>
+</section>
+
+<!-- ─── ABOUT ────────────────────────── -->
+<section id="about">
+  <div class="about-layout">
+    <div>
+      <div class="s-label reveal">Qui sommes-nous</div>
+      <h2 class="s-title reveal d1">Une expertise,<br><strong>incarnée.</strong></h2>
+      <p class="s-body reveal d2">Chez Piscine Island, chaque projet est traité avec une exigence absolue. Un seul interlocuteur, une maîtrise totale — de la conception à la mise en eau, Wilfried Payet vous accompagne personnellement.</p>
+      <p class="s-body reveal d2">Depuis plus de 14 ans, nous intervenons à La Réunion avec une connaissance précise des conditions tropicales. Nous ne sous-traitons rien. Nous ne faisons aucun compromis.</p>
+    </div>
+    <div class="about-right reveal d2">
+      <div class="capabilities">
+        <div class="cap-item"><strong>Étude sur-mesure</strong>Analyse précise de votre bassin et de vos attentes.</div>
+        <div class="cap-item"><strong>Interlocuteur unique</strong>Suivi personnalisé de A à Z par le fondateur.</div>
+        <div class="cap-item"><strong>Adaptation tropicale</strong>14 ans d'expertise en climat réunionnais.</div>
+        <div class="cap-item"><strong>Réactivité maîtrisée</strong>Interventions rapides sans compromis sur la qualité.</div>
+        <div class="cap-item"><strong>Garantie étendue</strong>10 ans sur la membrane, 20+ ans de durabilité.</div>
+        <div class="cap-item"><strong>Solution clé en main</strong>De la conception à la mise en eau, sans intermédiaire.</div>
+      </div>
+      <div class="stats-row">
+        <div><span class="stat-n">14+</span><span class="stat-l">Ans d'expérience</span></div>
+        <div><span class="stat-n">10</span><span class="stat-l">Ans de garantie</span></div>
+        <div><span class="stat-n">20+</span><span class="stat-l">Ans de durabilité</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SERVICES ─────────────────────── -->
+<section id="services">
+  <div class="srv-header">
+    <div>
+      <div class="s-label reveal">Ce que nous faisons</div>
+      <h2 class="s-title reveal d1" style="margin-bottom:0">Nos services</h2>
+    </div>
+    <p class="s-body reveal d2" style="margin-bottom:0">Une offre complète, maîtrisée de A à Z par un seul expert dédié à votre piscine — de l'entretien régulier à la rénovation complète, en passant par notre spécialité signature : la membrane armée.</p>
+  </div>
+  <div class="srv-grid">
+
+    <div class="srv-card reveal">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><path d="M24 8v6M24 34v6M8 24h6M34 24h6"/><circle cx="24" cy="24" r="5"/></svg><span class="srv-num">01</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Entretien régulier</div>
+      <div class="srv-desc">Analyse & traitement de l'eau, nettoyage filtres et bassin, vérification équipements. Votre piscine toujours prête.</div>
+    </div>
+
+    <div class="srv-card reveal d1">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><path d="M8 40l8-8 4-20 4 8 4-12 4 8 4-4"/><circle cx="8" cy="40" r="2.5"/></svg><span class="srv-num">02</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Dépannage & Réparation</div>
+      <div class="srv-desc">Recherche de fuites, pompes, moteurs, éclairages, appareils de traitement. Réactivité sans compromis.</div>
+    </div>
+
+    <div class="srv-card reveal d2">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><path d="M8 36c5-8 11-8 16-4s11 4 16-4M8 26c5-8 11-8 16-4s11 4 16-4"/><rect x="10" y="14" width="28" height="4" rx="2"/></svg><span class="srv-num">03</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Membrane armée</div>
+      <div class="srv-desc">Renolit Alkorplan — Pose sur ancien revêtement, sans démolition. La référence haut de gamme de l'île.</div>
+    </div>
+
+    <div class="srv-card reveal d3">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><rect x="8" y="28" width="32" height="12" rx="2"/><path d="M14 28V18a10 10 0 0120 0v10"/><path d="M20 28v-6M28 28v-6"/></svg><span class="srv-num">04</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Rénovation complète</div>
+      <div class="srv-desc">Transformation totale du bassin, revêtements, équipements. Votre piscine renouvelée à neuf.</div>
+    </div>
+
+    <div class="srv-card reveal">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><path d="M10 38V16l14-8 14 8v22M10 38h28M24 38V26h-6v12M30 26h-6"/></svg><span class="srv-num">05</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Local technique</div>
+      <div class="srv-desc">Rénovation, optimisation et déplacement de local technique. Équipements performants, consommation réduite.</div>
+    </div>
+
+    <div class="srv-card reveal d1">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><rect x="8" y="8" width="32" height="32" rx="4"/><path d="M16 26h6l3-8 4 16 3-8h-2"/></svg><span class="srv-num">06</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Domotique</div>
+      <div class="srv-desc">Pilotez éclairage, traitement et chauffage depuis votre smartphone. La piscine intelligente.</div>
+    </div>
+
+    <div class="srv-card reveal d2">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="10"/><path d="M24 6v6M24 36v6M6 24h6M36 24h6M11 11l4 4M33 11l-4 4M11 37l4-4M33 37l-4-4"/></svg><span class="srv-num">07</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Recherche de fuite</div>
+      <div class="srv-desc">Détection et localisation précise des fuites sur installations ou bassin. Diagnostic avant intervention.</div>
+    </div>
+
+    <div class="srv-card reveal d3">
+      <div class="srv-ico"><svg viewBox="0 0 48 48"><path d="M30 14a10 10 0 11-12 0"/><path d="M24 6v14"/></svg><span class="srv-num">08</span></div>
+      <div class="srv-bar"></div>
+      <div class="srv-name">Pompes à chaleur</div>
+      <div class="srv-desc">Installation, remplacement et optimisation de pompes à chaleur. Confort et économies garantis.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── MEMBRANE ─────────────────────── -->
+<section id="membrane">
+  <div class="mem-layout">
+    <div>
+      <div class="s-label reveal">Notre spécialité signature</div>
+      <h2 class="s-title reveal d1">Bien plus qu'un<br>revêtement,<br><em>une signature.</em></h2>
+      <p class="s-body reveal d2">La membrane armée Renolit Alkorplan Touch — la référence conçue pour sublimer votre piscine et traverser le temps. Inspirée par la nature, adaptée au climat réunionnais. Pose directe sur ancien revêtement, sans démolition lourde.</p>
+      <div class="mem-tag reveal d3">Renolit Alkorplan Touch</div>
+    </div>
+    <div class="mem-right">
+      <div class="s-label reveal">Caractéristiques essentielles</div>
+      <div class="mem-features">
+        <div class="mf reveal">
+          <span class="mf-n">01</span>
+          <div>
+            <div class="mf-title">Pose sans démolition</div>
+            <div class="mf-desc">Applicable sur carrelage, résine, peinture ou ancien revêtement. Chantier propre, rapide, sans poussière ni décapage lourd.</div>
+          </div>
+        </div>
+        <div class="mf reveal d1">
+          <span class="mf-n">02</span>
+          <div>
+            <div class="mf-title">Conçue pour durer</div>
+            <div class="mf-desc">Résistance exceptionnelle aux UV, produits chimiques et variations thermiques tropicales. Garantie 10 ans, durée de vie estimée à plus de 20 ans.</div>
+          </div>
+        </div>
+        <div class="mf reveal d2">
+          <span class="mf-n">03</span>
+          <div>
+            <div class="mf-title">Finitions d'exception</div>
+            <div class="mf-desc">Large choix de textures et couleurs inspirées de la nature. Rendu moderne, élégant et intemporel pour chaque projet.</div>
+          </div>
+        </div>
+        <div class="mf reveal d3">
+          <span class="mf-n">04</span>
+          <div>
+            <div class="mf-title">Adaptée à La Réunion</div>
+            <div class="mf-desc">14 ans d'expérience en conditions tropicales. La solution de référence sur l'île, posée par les mains qui la connaissent.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROCESS ──────────────────────── -->
+<section id="process">
+  <div class="proc-header">
+    <div class="s-label reveal">Notre approche</div>
+    <h2 class="s-title reveal d1">Une maîtrise,<br><em>de A à Z.</em></h2>
+    <span class="gold-divider reveal d2"></span>
+  </div>
+  <div class="proc-steps">
+    <div class="proc-step reveal">
+      <div class="proc-circle">I</div>
+      <div class="proc-title">Étude & Conception</div>
+      <div class="proc-desc">Visite, diagnostic complet et solution parfaitement adaptée à votre bassin et à vos attentes.</div>
+    </div>
+    <div class="proc-step reveal d1">
+      <div class="proc-circle">II</div>
+      <div class="proc-title">Réalisation maîtrisée</div>
+      <div class="proc-desc">Chaque étape exécutée avec rigueur dans le respect des standards les plus exigeants de la profession.</div>
+    </div>
+    <div class="proc-step reveal d2">
+      <div class="proc-circle">III</div>
+      <div class="proc-title">Finition & Mise en eau</div>
+      <div class="proc-desc">Un soin absolu aux finitions pour un résultat irréprochable, prêt à être pleinement vécu.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIAL ──────────────────── -->
+<section id="testimonial">
+  <div class="testi-inner">
+    <span class="quote-mark reveal">"</span>
+    <p class="quote-text reveal d1">Je redécouvre ma piscine tous les jours.</p>
+    <p class="quote-attr reveal d2">— Client Piscine Island · La Réunion</p>
+  </div>
+</section>
+
+<!-- ─── CONTACT ──────────────────────── -->
+<section id="contact">
+  <div>
+    <div class="s-label reveal">Parlons de votre projet</div>
+    <h2 class="contact-tagline reveal d1">Votre piscine<br>mérite le<br><em>meilleur.</em></h2>
+    <p class="contact-body reveal d2">Je vous accompagne personnellement de la conception à la réalisation. Un seul interlocuteur, une vision commune, un résultat exceptionnel.</p>
+    <div class="cinfo reveal d3">
+      <a class="citem" href="tel:0692601368">
+        <div class="citem-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg></div>
+        <div><div class="citem-l">Téléphone / WhatsApp</div><div class="citem-v">06.92.60.13.68</div></div>
+      </a>
+      <a class="citem" href="mailto:piscineisland@gmail.com">
+        <div class="citem-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div><div class="citem-l">Email</div><div class="citem-v">piscineisland@gmail.com</div></div>
+      </a>
+      <a class="citem" href="https://www.piscineisland.re" target="_blank">
+        <div class="citem-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+        <div><div class="citem-l">Site Web</div><div class="citem-v">www.piscineisland.re</div></div>
+      </a>
+      <a class="citem" href="https://www.instagram.com/piscine_island" target="_blank">
+        <div class="citem-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+        <div><div class="citem-l">Instagram</div><div class="citem-v">@piscine_island</div></div>
+      </a>
+    </div>
+  </div>
+  <div class="contact-imgwrap reveal d2">
+    <img src="assets/wilfried.jpg" alt="Wilfried Payet - Fondateur Piscine Island">
+    <div class="founder-info">
+      <p class="signature">Wilfried</p>
+      <h3 class="f-name">Wilfried Payet</h3>
+      <div class="f-title">Fondateur · Piscine Island</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ───────────────────────── -->
+<footer>
+  <a href="#hero" class="nav-logo">
+    <img src="assets/logo.png" alt="Piscine Island">
+  </a>
+  <ul class="f-links">
+    <li><a href="#about">À propos</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#membrane">Membrane</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <span class="f-copy">© 2025 Piscine Island · La Réunion</span>
+</footer>
+
+<script>
+// ── CURSOR
+const cur = document.getElementById('cur');
+const ring = document.getElementById('curRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.transform = 'translate(' + mx + 'px,' + my + 'px) translate(-50%,-50%)';
+});
+(function animRing(){
+  rx += (mx-rx)*0.1; ry += (my-ry)*0.1;
+  ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px) translate(-50%,-50%)';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a,button,.srv-card,.mf').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='52px'; ring.style.height='52px'; ring.style.borderColor='rgba(196,169,107,.75)'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='32px'; ring.style.height='32px'; ring.style.borderColor='rgba(196,169,107,.4)'; });
+});
+
+// ── NAV scroll state
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+}, {passive:true});
+
+// ── HERO title reveal on load
+window.addEventListener('load', () => {
+  document.getElementById('heroTitle').classList.add('revealed');
+});
+// fallback in case load already fired
+setTimeout(() => {
+  document.getElementById('heroTitle').classList.add('revealed');
+}, 200);
+
+// ── REVEAL on scroll
+const revEls = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold: 0.12});
+revEls.forEach(el => obs.observe(el));
+
+// ── MOBILE MENU
+const ham = document.getElementById('ham');
+const mob = document.getElementById('mobMenu');
+ham.addEventListener('click', () => {
+  const open = ham.classList.toggle('open');
+  if(open) { mob.style.display='flex'; requestAnimationFrame(()=>mob.classList.add('open')); }
+  else { mob.classList.remove('open'); setTimeout(()=>mob.style.display='none', 400); }
+});
+document.querySelectorAll('.mlink').forEach(l => {
+  l.addEventListener('click', () => {
+    ham.classList.remove('open');
+    mob.classList.remove('open');
+    setTimeout(()=>mob.style.display='none', 400);
+  });
+});
+</script>
+</body>
 </html>
