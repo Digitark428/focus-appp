@@ -87,8 +87,6 @@ export default function MenuDrawer() {
           </div>
         </button>
 
-        {/* Phase de test : abonnement désactivé → entrée masquée.
-            Décommenter ce bloc pour réactiver l'accès à l'écran abonnement.
         <button
           onClick={() => { setShowMenu(false); setShowSubscription(true); }}
           className={itemCls}
@@ -111,7 +109,6 @@ export default function MenuDrawer() {
             </span>
           )}
         </button>
-        */}
 
         <button onClick={toggleVoice} className={itemCls}>
           {voiceOn

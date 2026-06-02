@@ -187,16 +187,12 @@ export function FocusProvider({ children }) {
   };
 
   // Trial countdown.
-  // ⚠️ Phase de test : l'essai de 7 jours et l'abonnement (3,99 €/mois)
-  // sont temporairement désactivés → accès illimité gratuit.
-  // Pour réactiver : remettre les versions commentées ci-dessous.
   const trialDaysLeft = (() => {
     if (!user?.trialStart) return 0;
     const elapsed = (Date.now() - user.trialStart) / (1000 * 60 * 60 * 24);
     return Math.max(0, Math.ceil(TRIAL_DAYS - elapsed));
   })();
-  // const trialExpired = user && !user.isSubscribed && trialDaysLeft <= 0;
-  const trialExpired = false;
+  const trialExpired = user && !user.isSubscribed && trialDaysLeft <= 0;
 
   // ────────────────────────────────────────────────────────────────────────
   // Current / next task detection

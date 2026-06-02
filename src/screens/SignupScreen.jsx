@@ -152,13 +152,11 @@ export default function SignupScreen() {
       </button>
 
       <p className="text-[11px] text-center mt-3" style={{ color: TEMPO.textDim }}>
-        ✨ Accès gratuit · sans carte bancaire
+        ✨ 7 jours d'essai gratuit · sans carte bancaire
       </p>
-      {/* Phase de test : mention de prix masquée.
       <p className="text-[10px] text-center mt-1" style={{ color: TEMPO.textMuted }}>
         3,99 € / mois ensuite · sans engagement
       </p>
-      */}
 
       <p className="text-[12px] text-center mt-4" style={{ color: TEMPO.textDim }}>
         Déjà un compte ?{" "}
