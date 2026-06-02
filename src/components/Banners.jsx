@@ -3,6 +3,9 @@ import { TEMPO, TEMPO_GRADIENTS } from "../utils/tempoTheme";
 
 export function TrialBanner() {
   const { user, trialDaysLeft, setShowSubscription } = useFocus();
+  // Phase de test : aucune incitation à l'abonnement → bannière masquée.
+  return null;
+  // eslint-disable-next-line no-unreachable
   if (user.isSubscribed || trialDaysLeft <= 0) return null;
 
   return (
