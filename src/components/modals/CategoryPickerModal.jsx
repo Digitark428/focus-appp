@@ -74,7 +74,7 @@ export default function CategoryPickerModal() {
                   >
                     <Plus size={9} style={{ color: "#1A1206" }} strokeWidth={3} />
                   </div>
-                  <h3 className="text-sm font-medium" style={{ color: TEMPO.text }}>Mes tâches</h3>
+                  <h3 className="text-sm font-medium" style={{ color: TEMPO.text }}>Mes tâches réutilisables</h3>
                 </div>
                 <button
                   onClick={openNewTemplate}
@@ -95,44 +95,47 @@ export default function CategoryPickerModal() {
                   Créer une tâche personnalisée réutilisable
                 </button>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                  className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x"
+                  style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+                >
                   {customTaskTemplates.map((tpl) => {
                     const iconDef = CUSTOM_TASK_ICONS.find((i) => i.key === tpl.iconKey);
                     const TplIcon = iconDef?.icon || Zap;
                     return (
-                      <div key={tpl.id} className="relative group">
+                      <div key={tpl.id} className="relative group shrink-0 snap-start" style={{ width: 104 }}>
                         <button
                           onClick={() => insertTemplate(tpl)}
-                          className="w-full p-3.5 rounded-2xl border transition hover:scale-[1.02] text-left"
+                          className="w-full p-2.5 rounded-2xl border transition hover:scale-[1.02] text-left"
                           style={{ background: tpl.color + "12", borderColor: tpl.color + "40" }}
                         >
                           <div
-                            className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center mb-1.5"
                             style={{ background: tpl.color + "25" }}
                           >
-                            <TplIcon size={15} style={{ color: tpl.color }} />
+                            <TplIcon size={13} style={{ color: tpl.color }} />
                           </div>
-                          <p className="text-sm font-medium truncate" style={{ color: tpl.color }}>
+                          <p className="text-xs font-medium truncate" style={{ color: tpl.color }}>
                             {tpl.name}
                           </p>
                           <p className="text-[10px] mt-0.5" style={{ color: TEMPO.textDim }}>
                             {tpl.durationMin} min
                           </p>
                         </button>
-                        <div className="absolute top-1.5 right-1.5 gap-0.5 hidden group-hover:flex">
+                        <div className="absolute top-1 right-1 gap-0.5 flex sm:hidden sm:group-hover:flex">
                           <button
                             onClick={(e) => { e.stopPropagation(); openEditTemplate(tpl); }}
-                            className="w-6 h-6 rounded-lg backdrop-blur flex items-center justify-center transition hover:scale-110"
+                            className="w-5 h-5 rounded-md backdrop-blur flex items-center justify-center transition hover:scale-110"
                             style={{ background: "rgba(7,19,38,0.7)", color: TEMPO.textDim }}
                           >
-                            <Pencil size={10} />
+                            <Pencil size={9} />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); deleteTemplate(tpl.id); }}
-                            className="w-6 h-6 rounded-lg backdrop-blur flex items-center justify-center transition hover:scale-110 hover:text-red-400"
+                            className="w-5 h-5 rounded-md backdrop-blur flex items-center justify-center transition hover:scale-110 hover:text-red-400"
                             style={{ background: "rgba(7,19,38,0.7)", color: TEMPO.textDim }}
                           >
-                            <Trash2 size={10} />
+                            <Trash2 size={9} />
                           </button>
                         </div>
                       </div>
@@ -140,8 +143,8 @@ export default function CategoryPickerModal() {
                   })}
                   <button
                     onClick={openNewTemplate}
-                    className="p-3.5 rounded-2xl border border-dashed transition flex flex-col items-center justify-center gap-1 hover:bg-white/5"
-                    style={{ borderColor: TEMPO.border, color: TEMPO.textDim }}
+                    className="shrink-0 snap-start rounded-2xl border border-dashed transition flex flex-col items-center justify-center gap-1 hover:bg-white/5"
+                    style={{ borderColor: TEMPO.border, color: TEMPO.textDim, width: 104 }}
                   >
                     <Plus size={16} />
                     <span className="text-[10px]">Nouvelle</span>

@@ -163,6 +163,16 @@ export function FocusProvider({ children }) {
   const summaryShownRef = useRef(new Set());
   const logoTapsRef = useRef({ count: 0, lastTap: 0 });
 
+  // ── Garde-fous persistance ───────────────────────────────────────────────
+  // dataLoadedRef : true une fois l'hydratation initiale terminée. La
+  //   sauvegarde est BLOQUÉE tant qu'il est false → impossible d'écraser le
+  //   cloud par l'état vide initial pendant le chargement.
+  // loadedUserIdRef : id du dernier user dont les données ont été chargées.
+  //   Évite de re-clobberer l'état local lors des refresh de token
+  //   (onAuthChange rejoué) pour le même utilisateur.
+  const dataLoadedRef = useRef(false);
+  const loadedUserIdRef = useRef(null);
+
   // ────────────────────────────────────────────────────────────────────────
   // Derived values
   // ────────────────────────────────────────────────────────────────────────
@@ -391,7 +401,12 @@ export function FocusProvider({ children }) {
   // Hydratation depuis une session Supabase : profil + snapshot user_data.
   // Conserve la forme `user` historiquement utilisée par les composants.
   const hydrateFromSession = async (session) => {
-    if (!session?.user) { setUser(null); return; }
+    if (!session?.user) {
+      setUser(null);
+      dataLoadedRef.current = false;
+      loadedUserIdRef.current = null;
+      return;
+    }
     const uid = session.user.id;
 
     const { profile } = await Profiles.fetchProfile(uid);
@@ -412,17 +427,49 @@ export function FocusProvider({ children }) {
     };
     setUser(sessionUser);
 
-    // Snapshot applicatif (tâches, planning, completions, metrics, etc.)
-    const { snapshot } = await UserData.fetchUserData(uid);
-    if (snapshot) {
-      if (Object.keys(snapshot.weekTasks         || {}).length) setWeekTasks(snapshot.weekTasks);
-      if (Object.keys(snapshot.weekFloatingTasks || {}).length) setWeekFloatingTasks(snapshot.weekFloatingTasks);
-      if (Object.keys(snapshot.completions       || {}).length) setCompletions(snapshot.completions);
-      if (Object.keys(snapshot.floatingCompletions || {}).length) setFloatingCompletions(snapshot.floatingCompletions);
-      if (Object.keys(snapshot.dayMetrics        || {}).length) setDayMetrics(snapshot.dayMetrics);
-      if (Array.isArray(snapshot.customTemplates))              setCustomTaskTemplates(snapshot.customTemplates);
-      if (snapshot.customTheme)                                 setCustomTheme(snapshot.customTheme);
+    // Refresh de token / ré-émission pour le MÊME user : on garde l'état
+    // local courant (potentiellement édité) — on ne recharge PAS le snapshot.
+    if (loadedUserIdRef.current === uid) return;
+
+    // Applique un snapshot dans le state React.
+    const applySnapshot = (snap) => {
+      if (!snap) return;
+      setWeekTasks(snap.weekTasks && Object.keys(snap.weekTasks).length ? snap.weekTasks : DEFAULT_TASKS);
+      setWeekFloatingTasks(snap.weekFloatingTasks && Object.keys(snap.weekFloatingTasks).length ? snap.weekFloatingTasks : DEFAULT_FLOATING);
+      setCompletions(snap.completions && Object.keys(snap.completions).length ? snap.completions : DEFAULT_COMPLETIONS);
+      setFloatingCompletions(snap.floatingCompletions || {});
+      setDayMetrics(snap.dayMetrics && Object.keys(snap.dayMetrics).length ? snap.dayMetrics : DEFAULT_DAY_METRICS);
+      if (Array.isArray(snap.customTemplates)) setCustomTaskTemplates(snap.customTemplates);
+      if (snap.customTheme) setCustomTheme(snap.customTheme);
+    };
+
+    // 1. Cloud (source de vérité) avec fallback réseau.
+    let snapshot = null, error = null;
+    try { ({ snapshot, error } = await UserData.fetchUserData(uid)); }
+    catch (e) { error = e; }
+
+    // 2. Cache local (filet de sécurité).
+    const local = UserData.readLocalSnapshot(uid);
+    const cloudEmpty = UserData.isSnapshotEmpty(snapshot);
+    const localHasData = local && !UserData.isSnapshotEmpty(local);
+
+    if (error && localHasData) {
+      // Cloud injoignable → on restaure le cache local, sans rien écraser.
+      applySnapshot(local);
+    } else if (cloudEmpty && localHasData) {
+      // Cloud vide mais cache local rempli = symptôme d'une perte/écrasement.
+      // On restaure le local ET on le re-pousse vers le cloud (récupération).
+      applySnapshot(local);
+      UserData.saveUserData(uid, local).catch(() => {});
+    } else if (!error) {
+      // Cas nominal : on applique le cloud et on rafraîchit le cache local.
+      applySnapshot(snapshot);
+      UserData.writeLocalSnapshot(uid, snapshot);
     }
+
+    // À partir d'ici seulement, les sauvegardes sont autorisées.
+    loadedUserIdRef.current = uid;
+    dataLoadedRef.current = true;
   };
 
   // Au montage : restaure la session puis écoute les changements.
@@ -461,18 +508,58 @@ export function FocusProvider({ children }) {
     return () => clearTimeout(profileSyncTimer.current);
   }, [user]);
 
-  // Sync du snapshot applicatif vers Supabase (debounced).
+  // Sync du snapshot applicatif vers Supabase (debounced) + cache local.
   const dataSyncTimer = useRef(null);
   useEffect(() => {
     if (!hasSupabase || !user?.id) return;
+    // ⚠️ Porte anti-écrasement : tant que l'hydratation initiale n'est pas
+    // terminée, on ne sauvegarde RIEN (sinon l'état vide initial écraserait
+    // les données cloud pendant le chargement réseau).
+    if (!dataLoadedRef.current) return;
+
+    const snapshot = {
+      weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
+      customTemplates: customTaskTemplates, customTheme,
+    };
+
+    // 1. Cache local IMMÉDIAT (synchrone) — survit au rechargement / coupure
+    //    réseau / fermeture d'onglet avant la fin du debounce.
+    UserData.writeLocalSnapshot(user.id, snapshot);
+
+    // 2. Cloud (debounced, avec retry interne).
     clearTimeout(dataSyncTimer.current);
     dataSyncTimer.current = setTimeout(() => {
-      UserData.saveUserData(user.id, {
-        weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
-        customTemplates: customTaskTemplates, customTheme,
-      }).catch(() => {});
+      UserData.saveUserData(user.id, snapshot).then(({ error }) => {
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn("[tempo] Sauvegarde cloud échouée, données conservées en local.", error);
+        }
+      });
     }, 800);
     return () => clearTimeout(dataSyncTimer.current);
+  }, [
+    user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
+    customTaskTemplates, customTheme,
+  ]);
+
+  // Flush de sécurité à la fermeture / mise en arrière-plan de l'app :
+  // garantit que le dernier état est écrit en local même si le debounce
+  // n'a pas eu le temps de partir.
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const flush = () => {
+      if (!dataLoadedRef.current) return;
+      UserData.writeLocalSnapshot(user.id, {
+        weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
+        customTemplates: customTaskTemplates, customTheme,
+      });
+    };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("visibilitychange", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("visibilitychange", flush);
+    };
   }, [
     user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
     customTaskTemplates, customTheme,
@@ -541,6 +628,9 @@ export function FocusProvider({ children }) {
   };
 
   const handleLogout = async () => {
+    // Bloque toute sauvegarde déclenchée par les resets d'état ci-dessous.
+    dataLoadedRef.current = false;
+    loadedUserIdRef.current = null;
     await Auth.signOut().catch(() => {});
     setUser(null);
     setShowProfile(false);
@@ -1197,10 +1287,10 @@ export function FocusProvider({ children }) {
   const dayFloatingCompletions = floatingCompletions[selectedDay] || {};
   const markFloatingDone = (taskId) => {
     const ftask = floatingTasks.find((t) => t.id === taskId);
-    setFloatingCompletions({
-      ...floatingCompletions,
-      [selectedDay]: { ...dayFloatingCompletions, [taskId]: "done" },
-    });
+    setFloatingCompletions((prev) => ({
+      ...prev,
+      [selectedDay]: { ...(prev[selectedDay] || {}), [taskId]: "done" },
+    }));
     if (ftask) {
       setValidationBurst({ color: ftask.color || "#E2B872", ts: Date.now() });
       setTimeout(() => setValidationBurst(null), 1800);
@@ -1208,9 +1298,11 @@ export function FocusProvider({ children }) {
     setFloatingDetail(null);
   };
   const unmarkFloatingDone = (taskId) => {
-    const next = { ...dayFloatingCompletions };
-    delete next[taskId];
-    setFloatingCompletions({ ...floatingCompletions, [selectedDay]: next });
+    setFloatingCompletions((prev) => {
+      const next = { ...(prev[selectedDay] || {}) };
+      delete next[taskId];
+      return { ...prev, [selectedDay]: next };
+    });
   };
 
   // Ouvre le détail d'une tâche flottante (lecture + action terminer)
