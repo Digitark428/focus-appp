@@ -180,6 +180,14 @@ export function FocusProvider({ children }) {
   // synchrone à la fermeture (pas d'await possible dans pagehide).
   const accessTokenRef = useRef(null);
 
+  // ── État de synchronisation cloud (visible UI + diagnostic) ──────────────
+  // status: "idle" | "saving" | "saved" | "error"
+  // error : message brut renvoyé par Supabase si le dernier upsert a échoué.
+  // lastSuccessAt : timestamp ms du dernier succès (affichage "il y a Xs").
+  const [syncStatus, setSyncStatus] = useState({
+    status: "idle", error: null, lastSuccessAt: null,
+  });
+
   // ────────────────────────────────────────────────────────────────────────
   // Derived values
   // ────────────────────────────────────────────────────────────────────────
@@ -427,6 +435,10 @@ export function FocusProvider({ children }) {
     accessTokenRef.current = session.access_token || null;
     const uid = session.user.id;
 
+    // Garantit l'existence de la ligne user_data avant toute UPDATE
+    // (compense un éventuel trigger handle_new_user absent / non exécuté).
+    UserData.ensureUserDataRow(uid).catch(() => {});
+
     const { profile } = await Profiles.fetchProfile(uid);
     const sessionUser = {
       id: uid,
@@ -565,11 +577,17 @@ export function FocusProvider({ children }) {
 
     // 2. Cloud (debounced, avec retry interne).
     clearTimeout(dataSyncTimer.current);
+    setSyncStatus((s) => ({ ...s, status: "saving" }));
     dataSyncTimer.current = setTimeout(() => {
       UserData.saveUserData(user.id, snapshot).then(({ error }) => {
         if (error) {
-          // eslint-disable-next-line no-console
-          console.warn("[tempo] Sauvegarde cloud échouée, données conservées en local.", error);
+          setSyncStatus({
+            status: "error",
+            error: error.message || String(error),
+            lastSuccessAt: null,
+          });
+        } else {
+          setSyncStatus({ status: "saved", error: null, lastSuccessAt: Date.now() });
         }
       });
     }, 400);
@@ -578,6 +596,25 @@ export function FocusProvider({ children }) {
     user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
     customTaskTemplates, customTheme,
   ]);
+
+  // Action manuelle : forcer une re-synchronisation immédiate vers Supabase.
+  // Pratique pour vérifier que la connexion fonctionne après une erreur.
+  const forceSync = async () => {
+    if (!hasSupabase || !user?.id) return { error: { message: "Pas de session Supabase active." } };
+    const snapshot = {
+      weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
+      customTemplates: customTaskTemplates, customTheme,
+    };
+    UserData.writeLocalSnapshot(user.id, snapshot);
+    setSyncStatus((s) => ({ ...s, status: "saving" }));
+    const { error } = await UserData.saveUserData(user.id, snapshot);
+    if (error) {
+      setSyncStatus({ status: "error", error: error.message || String(error), lastSuccessAt: null });
+    } else {
+      setSyncStatus({ status: "saved", error: null, lastSuccessAt: Date.now() });
+    }
+    return { error };
+  };
 
   // Flush de sécurité à la fermeture / mise en arrière-plan de l'app :
   // 1) écrit le cache local synchrone (filet de sécurité immédiat)
@@ -1683,6 +1720,9 @@ export function FocusProvider({ children }) {
     // Theming
     customTheme, setCustomTheme,
     activeDayThemes, dayTheme,
+
+    // Sync cloud (état visible + action manuelle)
+    syncStatus, forceSync,
 
     // Tasks
     selectedDate, setSelectedDate, selectDate, selectedWeekday,

@@ -122,16 +122,44 @@ export async function fetchUserData(userId) {
 }
 
 // Upsert avec 1 retry automatique en cas d'erreur réseau transitoire.
+// Erreurs systématiquement logguées avec préfixe `[tempo-sync]` pour
+// diagnostic via la console navigateur.
 export async function saveUserData(userId, snapshot) {
   const payload = { user_id: userId, ...appToDb(snapshot) };
+  // eslint-disable-next-line no-console
+  console.debug("[tempo-sync] upsert →", { userId, keys: Object.keys(snapshot.weekTasks || {}) });
   let { error } = await supabase
     .from("user_data")
     .upsert(payload, { onConflict: "user_id" });
   if (error) {
+    // eslint-disable-next-line no-console
+    console.warn("[tempo-sync] upsert ÉCHEC (1/2)", error);
     await new Promise((r) => setTimeout(r, 1200));
     ({ error } = await supabase
       .from("user_data")
       .upsert(payload, { onConflict: "user_id" }));
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error("[tempo-sync] upsert ÉCHEC DÉFINITIF", error);
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.debug("[tempo-sync] upsert OK");
+  }
+  return { error };
+}
+
+// Garantit l'existence de la ligne user_data pour cet utilisateur.
+// Utile si le trigger `handle_new_user` n'a pas tourné (compte créé
+// avant que le SQL ne soit appliqué côté Supabase, ou trigger désactivé).
+// Sans cette ligne, une UPDATE RLS pourrait être rejetée.
+export async function ensureUserDataRow(userId) {
+  const { error } = await supabase
+    .from("user_data")
+    .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error("[tempo-sync] ensureUserDataRow ÉCHEC", error);
   }
   return { error };
 }

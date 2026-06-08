@@ -1,7 +1,63 @@
 import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { useFocus } from "../context/FocusContext";
 import { TempoLogoMini } from "./TempoLogo";
 import { TEMPO } from "../utils/tempoTheme";
+
+// Indicateur de synchronisation cloud — discret, en haut à droite.
+// Vert = sauvegardé / Jaune = en cours / Rouge = erreur (tap → détails + retry).
+function SyncDot() {
+  const { syncStatus, forceSync } = useFocus();
+  const [open, setOpen] = useState(false);
+  const { status, error, lastSuccessAt } = syncStatus || {};
+  const color =
+    status === "error" ? "#EF4444" :
+    status === "saving" ? "#F2D28F" :
+    status === "saved" ? "#86EFAC" : TEMPO.textDim;
+  const visible = status !== "idle";
+  if (!visible) return null;
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-2.5 h-2.5 rounded-full transition"
+        style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+        aria-label="État de synchronisation"
+        title={status === "error" ? `Erreur sync : ${error}` : status}
+      />
+      {open && (
+        <div
+          className="absolute right-0 mt-2 w-64 p-3 rounded-2xl text-xs z-50"
+          style={{
+            background: "rgba(7,19,38,0.96)",
+            border: `1px solid ${TEMPO.border}`,
+            color: TEMPO.text,
+          }}
+        >
+          {status === "saving" && <p style={{ color: TEMPO.textDim }}>Sauvegarde en cours…</p>}
+          {status === "saved" && (
+            <p style={{ color: TEMPO.textDim }}>
+              Synchronisé{lastSuccessAt ? ` à ${new Date(lastSuccessAt).toLocaleTimeString("fr-FR")}` : ""}.
+            </p>
+          )}
+          {status === "error" && (
+            <>
+              <p className="mb-2" style={{ color: "#FCA5A5" }}>Sauvegarde cloud impossible</p>
+              <p className="mb-3 break-words" style={{ color: TEMPO.textDim }}>{error}</p>
+              <button
+                onClick={() => { setOpen(false); forceSync(); }}
+                className="w-full py-1.5 rounded-lg text-[11px]"
+                style={{ background: TEMPO.gold + "20", border: `1px solid ${TEMPO.gold}50`, color: TEMPO.gold }}
+              >
+                Réessayer maintenant
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MainHeader() {
   const { user, now, setShowMenu, handleLogoTap, handlePhotoUpload } = useFocus();
@@ -37,6 +93,7 @@ export default function MainHeader() {
       </button>
 
       <div className="flex items-center gap-2">
+        <SyncDot />
         {/* Photo de profil cliquable — upload direct depuis le dashboard.
             Stop propagation pour ne pas ouvrir le menu. */}
         <label
