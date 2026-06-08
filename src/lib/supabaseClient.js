@@ -10,7 +10,9 @@ if (!url || !anonKey) {
   console.warn("[tempo] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY manquants.");
 }
 
-export const supabase = createClient(url || "http://localhost", anonKey || "anon", {
+export const supabaseUrl = url || "http://localhost";
+export const supabaseAnonKey = anonKey || "anon";
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

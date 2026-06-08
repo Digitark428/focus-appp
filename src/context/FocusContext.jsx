@@ -176,6 +176,9 @@ export function FocusProvider({ children }) {
   //   (onAuthChange rejoué) pour le même utilisateur.
   const dataLoadedRef = useRef(false);
   const loadedUserIdRef = useRef(null);
+  // Token Supabase capturé à chaque onAuthChange, utilisé par le beacon
+  // synchrone à la fermeture (pas d'await possible dans pagehide).
+  const accessTokenRef = useRef(null);
 
   // ────────────────────────────────────────────────────────────────────────
   // Derived values
@@ -418,8 +421,10 @@ export function FocusProvider({ children }) {
       setUser(null);
       dataLoadedRef.current = false;
       loadedUserIdRef.current = null;
+      accessTokenRef.current = null;
       return;
     }
+    accessTokenRef.current = session.access_token || null;
     const uid = session.user.id;
 
     const { profile } = await Profiles.fetchProfile(uid);
@@ -457,24 +462,34 @@ export function FocusProvider({ children }) {
     };
 
     // 1. Cloud (source de vérité) avec fallback réseau.
-    let snapshot = null, error = null;
-    try { ({ snapshot, error } = await UserData.fetchUserData(uid)); }
+    let snapshot = null, error = null, raw = null;
+    try { ({ snapshot, error, raw } = await UserData.fetchUserData(uid)); }
     catch (e) { error = e; }
 
-    // 2. Cache local (filet de sécurité).
-    const local = UserData.readLocalSnapshot(uid);
+    // 2. Cache local horodaté (filet de sécurité, peut être PLUS RÉCENT que
+    //    le cloud si la dernière édition n'a pas eu le temps de partir avant
+    //    la fermeture de l'app).
+    const localEntry = UserData.readLocalSnapshot(uid);
+    const local = localEntry?.data || null;
+    const localTs = localEntry?.updatedAt || 0;
+    const cloudTs = raw?.updated_at ? Date.parse(raw.updated_at) : 0;
     const cloudEmpty = UserData.isSnapshotEmpty(snapshot);
     const localHasData = local && !UserData.isSnapshotEmpty(local);
+    // Tolérance 2 s : on ne déclenche la préférence locale que si l'écart est
+    // franc (évite les bagarres au démarrage juste après un save cloud).
+    const localIsFresher = localHasData && localTs > cloudTs + 2000;
 
-    // Choix de la source, puis migration v1→v2 (jour de semaine → date ISO).
+    // Choix de la source :
     let chosen = null;
-    let pushAfter = false; // re-pousser vers le cloud (récupération / migration)
+    let pushAfter = false;
     if (error && localHasData) {
-      chosen = local;
+      chosen = local; // cloud injoignable
     } else if (cloudEmpty && localHasData) {
-      chosen = local; pushAfter = true;
+      chosen = local; pushAfter = true; // cloud vide mais on a un cache rempli
+    } else if (localIsFresher) {
+      chosen = local; pushAfter = true; // édition locale postérieure au cloud
     } else if (!error) {
-      chosen = snapshot;
+      chosen = snapshot; // cas nominal
     }
 
     if (chosen) {
@@ -557,7 +572,7 @@ export function FocusProvider({ children }) {
           console.warn("[tempo] Sauvegarde cloud échouée, données conservées en local.", error);
         }
       });
-    }, 800);
+    }, 400);
     return () => clearTimeout(dataSyncTimer.current);
   }, [
     user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
@@ -565,16 +580,23 @@ export function FocusProvider({ children }) {
   ]);
 
   // Flush de sécurité à la fermeture / mise en arrière-plan de l'app :
-  // garantit que le dernier état est écrit en local même si le debounce
-  // n'a pas eu le temps de partir.
+  // 1) écrit le cache local synchrone (filet de sécurité immédiat)
+  // 2) déclenche un beacon SYNCHRONE vers Supabase via fetch keepalive — la
+  //    requête survit au déchargement de la page, ce qui supprime la fenêtre
+  //    de perte de ~800 ms (debounce) entre une édition et la fermeture.
   useEffect(() => {
     if (!user?.id) return undefined;
     const flush = () => {
       if (!dataLoadedRef.current) return;
-      UserData.writeLocalSnapshot(user.id, {
+      const snapshot = {
         weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
         customTemplates: customTaskTemplates, customTheme,
-      });
+      };
+      UserData.writeLocalSnapshot(user.id, snapshot);
+      // Beacon : ne dépend pas du debounce ; part immédiatement.
+      if (hasSupabase && accessTokenRef.current) {
+        UserData.flushSaveBeacon(user.id, accessTokenRef.current, snapshot);
+      }
     };
     window.addEventListener("pagehide", flush);
     window.addEventListener("visibilitychange", flush);
@@ -653,6 +675,7 @@ export function FocusProvider({ children }) {
     // Bloque toute sauvegarde déclenchée par les resets d'état ci-dessous.
     dataLoadedRef.current = false;
     loadedUserIdRef.current = null;
+    accessTokenRef.current = null;
     await Auth.signOut().catch(() => {});
     setUser(null);
     setShowProfile(false);
@@ -1032,7 +1055,9 @@ export function FocusProvider({ children }) {
 
   const resetDay = () => {
     setWeekTasks((w) => ({ ...w, [selectedDate]: [] }));
+    setWeekFloatingTasks((w) => ({ ...w, [selectedDate]: [] }));
     setCompletions((c) => ({ ...c, [selectedDate]: {} }));
+    setFloatingCompletions((f) => ({ ...f, [selectedDate]: {} }));
     setDayMetrics((prev) => ({ ...prev, [selectedDate]: {} }));
     setIsRunning(false);
     setPausedAt(null);

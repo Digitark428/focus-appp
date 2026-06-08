@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabaseClient";
+import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabaseClient";
 import { weekDatesFrom } from "../utils/time";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -74,16 +74,26 @@ export function isSnapshotEmpty(s) {
 // ─────────────────────────────────────────────────────────────────────────
 const LOCAL_KEY = (uid) => `tempo.userdata.${uid}`;
 
+// Forme stockée : { v: 2, data: <snapshot>, updatedAt: <ms epoch> }
+// (back-compat avec l'ancienne forme V12 sans wrapper : updatedAt = 0 → cloud gagne)
 export function readLocalSnapshot(uid) {
   try {
     const raw = localStorage.getItem(LOCAL_KEY(uid));
     if (!raw) return null;
-    return { ...SHAPE, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.updatedAt === "number") {
+      return { data: { ...SHAPE, ...parsed.data }, updatedAt: parsed.updatedAt };
+    }
+    // Ancienne forme : objet snapshot brut.
+    return { data: { ...SHAPE, ...parsed }, updatedAt: 0 };
   } catch { return null; }
 }
 
 export function writeLocalSnapshot(uid, snapshot) {
-  try { localStorage.setItem(LOCAL_KEY(uid), JSON.stringify(appToAppShape(snapshot))); } catch { /* quota */ }
+  try {
+    const payload = { v: 2, data: appToAppShape(snapshot), updatedAt: Date.now() };
+    localStorage.setItem(LOCAL_KEY(uid), JSON.stringify(payload));
+  } catch { /* quota */ }
 }
 
 export function clearLocalSnapshot(uid) {
@@ -124,6 +134,35 @@ export async function saveUserData(userId, snapshot) {
       .upsert(payload, { onConflict: "user_id" }));
   }
   return { error };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Flush SYNCHRONE à la fermeture de l'onglet (pagehide / visibilitychange) :
+// utilise fetch keepalive pour garantir l'envoi vers Supabase même si le
+// navigateur est en train de décharger la page. Évite la perte d'une édition
+// faite juste avant la fermeture (cas typique : reset day puis fermeture
+// immédiate, < 800 ms — le debounce n'avait pas encore tiré).
+//
+// L'access_token doit être passé par l'appelant (capturé via onAuthChange)
+// pour rester 100 % synchrone : pas d'await ici.
+// ─────────────────────────────────────────────────────────────────────────
+export function flushSaveBeacon(userId, accessToken, snapshot) {
+  if (!userId || !accessToken) return false;
+  try {
+    const body = JSON.stringify({ user_id: userId, ...appToDb(snapshot) });
+    fetch(`${supabaseUrl}/rest/v1/user_data?on_conflict=user_id`, {
+      method: "POST",
+      keepalive: true,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body,
+    }).catch(() => {});
+    return true;
+  } catch { return false; }
 }
 
 export { SHAPE as USER_DATA_SHAPE };
