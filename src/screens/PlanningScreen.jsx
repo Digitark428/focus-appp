@@ -1,7 +1,7 @@
 import { CheckCircle2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
 import { TASK_CATEGORIES } from "../constants/tasks";
-import { toMin } from "../utils/time";
+import { toMin, weekdayIndex, dayMonthLabel, todayISO, weekRangeLabel } from "../utils/time";
 import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../utils/tempoTheme";
 import PlanningTaskDetailModal from "../components/modals/PlanningTaskDetailModal";
 
@@ -19,23 +19,26 @@ const SUCCESS_SOFT = "#86EFAC";
 export default function PlanningScreen() {
   const {
     activeDayThemes, weekTasks, weekFloatingTasks, completions, floatingCompletions,
-    setShowPlanning, setSelectedDay, setShowProfile, setShowStats,
+    setShowPlanning, selectDate, setShowProfile, setShowStats,
     openPlanningDetail,
+    weekDates, weekAnchor, goPrevWeek, goNextWeek, goToToday,
   } = useFocus();
 
-  // Compte tâches totales / accomplies sur la semaine pour le résumé en tête.
+  // Compte tâches totales / accomplies sur la SEMAINE AFFICHÉE pour le résumé.
   let totalTasks = 0;
   let doneTasks = 0;
-  Object.entries(weekTasks).forEach(([idx, list]) => {
+  weekDates.forEach((dateKey) => {
+    const list = weekTasks[dateKey] || [];
     totalTasks += list.length;
-    const comp = completions[idx] || {};
+    const comp = completions[dateKey] || {};
     doneTasks += list.filter((t) => comp[t.id] === "done").length;
   });
   const weekPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const today = todayISO();
 
   // Bascule vers le dashboard d'un jour (modification possible là-bas).
-  const jumpToDay = (dayIdx) => {
-    setSelectedDay(dayIdx);
+  const jumpToDay = (dateKey) => {
+    selectDate(dateKey);
     setShowPlanning(false);
     setShowProfile(false);
     setShowStats(false);
@@ -96,6 +99,41 @@ export default function PlanningScreen() {
             </p>
           </div>
 
+          {/* Navigation par semaines réelles */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goPrevWeek}
+                className="w-6 h-6 rounded-full flex items-center justify-center transition hover:bg-white/5"
+                style={{ border: `1px solid ${TEMPO.border}`, color: TEMPO.textDim }}
+                aria-label="Semaine précédente"
+              >
+                <ChevronLeft size={12} />
+              </button>
+              <span className="text-xs tabular-nums" style={{ color: TEMPO.text }}>
+                {weekRangeLabel(weekAnchor)}
+              </span>
+              <button
+                onClick={goNextWeek}
+                className="w-6 h-6 rounded-full flex items-center justify-center transition hover:bg-white/5"
+                style={{ border: `1px solid ${TEMPO.border}`, color: TEMPO.textDim }}
+                aria-label="Semaine suivante"
+              >
+                <ChevronRight size={12} />
+              </button>
+            </div>
+            {!weekDates.includes(today) && (
+              <button
+                onClick={goToToday}
+                className="text-[10px] uppercase tracking-[0.15em] flex items-center gap-1 transition"
+                style={{ color: TEMPO.gold }}
+              >
+                <span className="w-1 h-1 rounded-full" style={{ background: TEMPO.gold }} />
+                Cette semaine
+              </button>
+            )}
+          </div>
+
           <div
             className="relative h-1.5 rounded-full overflow-hidden"
             style={{ background: "rgba(255,255,255,0.05)" }}
@@ -118,27 +156,30 @@ export default function PlanningScreen() {
 
         {/* Liste des jours — colonne unique sur mobile, grille 2 colonnes sur desktop */}
         <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
-          {activeDayThemes.map((theme, dayIdx) => {
-            const tasks = [...(weekTasks[dayIdx] || [])].sort(
+          {weekDates.map((dateKey) => {
+            const dayIdx = weekdayIndex(dateKey);
+            const theme = activeDayThemes[dayIdx];
+            const tasks = [...(weekTasks[dateKey] || [])].sort(
               (a, b) => toMin(a.start) - toMin(b.start),
             );
-            const floats = weekFloatingTasks[dayIdx] || [];
-            const dayComp = completions[dayIdx] || {};
-            const dayFloatComp = floatingCompletions[dayIdx] || {};
+            const floats = weekFloatingTasks[dateKey] || [];
+            const dayComp = completions[dateKey] || {};
+            const dayFloatComp = floatingCompletions[dateKey] || {};
             const accent = theme.accent;
+            const isToday = dateKey === today;
 
             return (
               <div
-                key={dayIdx}
+                key={dateKey}
                 className="rounded-2xl border p-3 lg:p-4"
                 style={{
                   background: "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",
-                  borderColor: TEMPO.border,
+                  borderColor: isToday ? accent + "55" : TEMPO.border,
                 }}
               >
                 {/* Header jour — cliquable pour basculer vers le dashboard du jour */}
                 <button
-                  onClick={() => jumpToDay(dayIdx)}
+                  onClick={() => jumpToDay(dateKey)}
                   className="w-full flex items-center justify-between mb-2 lg:mb-3 transition hover:opacity-90 text-left"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -149,8 +190,8 @@ export default function PlanningScreen() {
                     <p className="text-sm font-medium truncate" style={{ color: TEMPO.text }}>
                       {theme.name}
                     </p>
-                    <p className="text-[10px] italic truncate" style={{ color: TEMPO.textDim }}>
-                      · {theme.mood}
+                    <p className="text-[10px] tabular-nums truncate" style={{ color: TEMPO.textDim }}>
+                      {dayMonthLabel(dateKey)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -179,7 +220,7 @@ export default function PlanningScreen() {
                       return (
                         <button
                           key={task.id}
-                          onClick={() => openPlanningDetail({ task, dayIdx, isFloating: false, status })}
+                          onClick={() => openPlanningDetail({ task, dateKey, isFloating: false, status })}
                           className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left transition hover:scale-[1.005] active:scale-[0.995]"
                           style={{
                             background: isDone
@@ -243,7 +284,7 @@ export default function PlanningScreen() {
                               <button
                                 key={f.id}
                                 onClick={() => openPlanningDetail({
-                                  task: f, dayIdx, isFloating: true,
+                                  task: f, dateKey, isFloating: true,
                                   status: fIsDone ? "done" : null,
                                 })}
                                 className="text-[9px] lg:text-[10px] px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-full transition hover:scale-105 active:scale-95 flex items-center gap-1"

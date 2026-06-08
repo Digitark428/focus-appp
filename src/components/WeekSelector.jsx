@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useFocus } from "../context/FocusContext";
-import { todayIndex } from "../utils/time";
+import { todayISO, weekdayIndex, weekRangeLabel } from "../utils/time";
 import { TEMPO } from "../utils/tempoTheme";
 
 export default function WeekSelector() {
-  const { activeDayThemes, selectedDay, setSelectedDay, weekTasks, dayTheme } = useFocus();
-  const today = todayIndex();
+  const {
+    activeDayThemes, selectedDate, selectDate, weekTasks, dayTheme,
+    weekDates, weekAnchor, goToToday, goPrevWeek, goNextWeek,
+  } = useFocus();
+  const today = todayISO();
   const scrollRef = useRef(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -26,18 +29,42 @@ export default function WeekSelector() {
       el.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [activeDayThemes.length]);
+  }, [weekDates]);
+
+  const currentWeek = weekDates.includes(today);
 
   return (
     <div data-tour="week" className="mb-6 -mx-6 px-6">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: TEMPO.textDim }}>
-          Semaine
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: TEMPO.textDim }}>
+            Semaine
+          </p>
+          {/* Navigation par semaines réelles */}
+          <button
+            onClick={goPrevWeek}
+            className="w-5 h-5 rounded-full flex items-center justify-center transition hover:bg-white/5"
+            style={{ border: `1px solid ${TEMPO.border}`, color: TEMPO.textDim }}
+            aria-label="Semaine précédente"
+          >
+            <ChevronLeft size={11} />
+          </button>
+          <span className="text-[10px] tabular-nums" style={{ color: TEMPO.textDim }}>
+            {weekRangeLabel(weekAnchor)}
+          </span>
+          <button
+            onClick={goNextWeek}
+            className="w-5 h-5 rounded-full flex items-center justify-center transition hover:bg-white/5"
+            style={{ border: `1px solid ${TEMPO.border}`, color: TEMPO.textDim }}
+            aria-label="Semaine suivante"
+          >
+            <ChevronRight size={11} />
+          </button>
+        </div>
         <div className="flex items-center gap-3">
-          {selectedDay !== today && (
+          {(!currentWeek || selectedDate !== today) && (
             <button
-              onClick={() => setSelectedDay(today)}
+              onClick={goToToday}
               className="text-[10px] uppercase tracking-[0.15em] transition flex items-center gap-1"
               style={{ color: TEMPO.textDim }}
             >
@@ -57,17 +84,20 @@ export default function WeekSelector() {
           ref={scrollRef}
           className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 snap-x snap-mandatory no-scrollbar scroll-smooth"
         >
-          {activeDayThemes.map((day, idx) => {
-            const isSelected = selectedDay === idx;
-            const isToday = idx === today;
-            const count = (weekTasks[idx] || []).length;
+          {weekDates.map((dateKey) => {
+            const wd = weekdayIndex(dateKey);
+            const day = activeDayThemes[wd];
+            const isSelected = selectedDate === dateKey;
+            const isToday = dateKey === today;
+            const count = (weekTasks[dateKey] || []).length;
             const dots = Math.min(count, 5);
             const accent = day.accent;
+            const dayNum = Number(dateKey.split("-")[2]);
 
             return (
               <button
-                key={idx}
-                onClick={() => setSelectedDay(idx)}
+                key={dateKey}
+                onClick={() => selectDate(dateKey)}
                 className={`shrink-0 snap-start flex flex-col items-center justify-center w-16 h-20 rounded-2xl border transition-all ${
                   isSelected ? "scale-105" : ""
                 }`}
@@ -82,10 +112,16 @@ export default function WeekSelector() {
                 }}
               >
                 <span
-                  className="text-[10px] uppercase tracking-widest font-medium mb-2"
+                  className="text-[10px] uppercase tracking-widest font-medium"
                   style={{ color: isSelected ? accent : TEMPO.textDim }}
                 >
                   {day.short}
+                </span>
+                <span
+                  className="text-[11px] font-mono tabular-nums mb-1"
+                  style={{ color: isSelected ? accent : TEMPO.textMuted }}
+                >
+                  {dayNum}
                 </span>
                 <div className="flex items-center gap-0.5 h-5">
                   {count === 0 ? (
@@ -115,7 +151,7 @@ export default function WeekSelector() {
                 </div>
                 {isToday && (
                   <span
-                    className="mt-1.5 w-1 h-1 rounded-full"
+                    className="mt-1 w-1 h-1 rounded-full"
                     style={{ background: accent, boxShadow: `0 0 4px ${accent}` }}
                   />
                 )}
@@ -124,8 +160,7 @@ export default function WeekSelector() {
           })}
         </div>
 
-        {/* Indicateur de scroll horizontal — fade + flèche dorée discrète.
-            Visible uniquement quand il reste du contenu à droite. */}
+        {/* Indicateur de scroll horizontal — fade + flèche dorée discrète. */}
         <div
           className="pointer-events-none absolute top-0 right-0 h-[calc(100%-8px)] w-14 flex items-center justify-end pr-1 transition-opacity duration-300"
           style={{

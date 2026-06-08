@@ -161,7 +161,7 @@ export const TASK_CATEGORIES = [
 ];
 
 // Initial empty task lists for each day of the week (0=Monday ... 6=Sunday).
-export const DEFAULT_TASKS = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-export const DEFAULT_FLOATING = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-export const DEFAULT_COMPLETIONS = { 0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {} };
-export const DEFAULT_DAY_METRICS = { 0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {} };
+export const DEFAULT_TASKS = {};
+export const DEFAULT_FLOATING = {};
+export const DEFAULT_COMPLETIONS = {};
+export const DEFAULT_DAY_METRICS = {};

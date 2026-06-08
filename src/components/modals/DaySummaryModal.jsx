@@ -6,7 +6,7 @@ import { TEMPO, TEMPO_GRADIENTS, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 export default function DaySummaryModal() {
   const {
     showDaySummary, setShowDaySummary, setShowStats,
-    tasks, dayCompletions, dayMetrics, selectedDay, dayTheme,
+    tasks, dayCompletions, dayMetrics, selectedDate, dayTheme,
   } = useFocus();
 
   if (!showDaySummary) return null;
@@ -16,7 +16,7 @@ export default function DaySummaryModal() {
   const skippedTasks = tasks.filter((t) => dayCompletions[t.id] === "skipped").length;
   const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-  const metrics = dayMetrics[selectedDay] || {};
+  const metrics = dayMetrics[selectedDate] || {};
   const pauseMin = metrics.pauseMin || 0;
   const original = metrics.originalTasks || [];
 

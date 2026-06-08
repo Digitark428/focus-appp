@@ -1,7 +1,7 @@
 import { CheckCircle2, Clock, X } from "lucide-react";
 import { useFocus } from "../../context/FocusContext";
 import { TASK_CATEGORIES } from "../../constants/tasks";
-import { toMin } from "../../utils/time";
+import { toMin, weekdayIndex } from "../../utils/time";
 import { TEMPO, TEMPO_SHADOWS } from "../../utils/tempoTheme";
 
 const FLOAT = "#E2B872";
@@ -19,18 +19,18 @@ const SUCCESS_SOFT = "#86EFAC";
 export default function PlanningTaskDetailModal() {
   const {
     planningDetail, closePlanningDetail,
-    activeDayThemes,
-    setSelectedDay, setShowPlanning, setShowProfile, setShowStats,
+    activeDayThemes, selectDate,
+    setShowPlanning, setShowProfile, setShowStats,
   } = useFocus();
 
   if (!planningDetail) return null;
 
-  const { task, dayIdx, isFloating, status } = planningDetail;
+  const { task, dateKey, isFloating, status } = planningDetail;
   const isDone = status === "done";
   const isSkipped = status === "skipped";
   const cat = task.category ? TASK_CATEGORIES.find((c) => c.id === task.category) : null;
   const CatIcon = cat?.icon;
-  const theme = activeDayThemes[dayIdx];
+  const theme = activeDayThemes[weekdayIndex(dateKey)];
 
   // Couleur accent : verte si terminée, sinon couleur de tâche.
   const baseColor = isFloating ? (task.color || FLOAT) : task.color;
@@ -45,7 +45,7 @@ export default function PlanningTaskDetailModal() {
   }
 
   const jumpToDay = () => {
-    setSelectedDay(dayIdx);
+    selectDate(dateKey);
     setShowPlanning(false);
     setShowProfile(false);
     setShowStats(false);

@@ -5,7 +5,7 @@ import {
 } from "../constants/tasks";
 import {
   cascadeShift, cascadeWouldOverflow, detectExistingConflicts, findConflicts,
-  fromMin, todayIndex, toMin,
+  fromMin, todayISO, toMin, weekdayIndex, weekDatesFrom, addDaysISO,
 } from "../utils/time";
 import { getDayThemes } from "../utils/themes";
 import { hasSupabase } from "../lib/supabaseClient";
@@ -63,8 +63,12 @@ export function FocusProvider({ children }) {
   // ── Theming ─────────────────────────────────────────────────────────────
   const [customTheme, setCustomTheme] = useState("default");
 
-  // ── Tasks per day ────────────────────────────────────────────────────────
-  const [selectedDay, setSelectedDay] = useState(todayIndex());
+  // ── Tasks per day (modèle calendaire daté "YYYY-MM-DD") ──────────────────
+  // selectedDate : jour actuellement affiché (clé des données).
+  // weekAnchor   : une date appartenant à la semaine affichée dans le sélecteur
+  //                / le planning (sert à la navigation par semaines réelles).
+  const [selectedDate, setSelectedDate] = useState(todayISO());
+  const [weekAnchor, setWeekAnchor] = useState(todayISO());
   const [weekTasks, setWeekTasks] = useState(DEFAULT_TASKS);
   const [weekFloatingTasks, setWeekFloatingTasks] = useState(DEFAULT_FLOATING);
   const [completions, setCompletions] = useState(DEFAULT_COMPLETIONS);
@@ -79,7 +83,7 @@ export function FocusProvider({ children }) {
   });
 
   // ── Floating task completions (par jour) ─────────────────────────────────
-  // Clé : selectedDay → { [floatingTaskId]: "done" }
+  // Clé : selectedDate → { [floatingTaskId]: "done" }
   const [floatingCompletions, setFloatingCompletions] = useState({});
 
   // ── Détail tâche sans horaire (modal lecture/action) ─────────────────────
@@ -177,10 +181,12 @@ export function FocusProvider({ children }) {
   // Derived values
   // ────────────────────────────────────────────────────────────────────────
   const activeDayThemes = useMemo(() => getDayThemes(customTheme), [customTheme]);
-  const dayTheme = activeDayThemes[selectedDay];
-  const tasks = weekTasks[selectedDay] || [];
-  const floatingTasks = weekFloatingTasks[selectedDay] || [];
-  const dayCompletions = completions[selectedDay] || {};
+  const selectedWeekday = weekdayIndex(selectedDate);
+  const dayTheme = activeDayThemes[selectedWeekday];
+  const weekDates = useMemo(() => weekDatesFrom(weekAnchor), [weekAnchor]);
+  const tasks = weekTasks[selectedDate] || [];
+  const floatingTasks = weekFloatingTasks[selectedDate] || [];
+  const dayCompletions = completions[selectedDate] || {};
   const sortedTasks = useMemo(
     () => [...tasks].sort((a, b) => toMin(a.start) - toMin(b.start)),
     [tasks],
@@ -189,12 +195,19 @@ export function FocusProvider({ children }) {
   // Helpers that mutate weekly state for the *currently selected* day.
   const setTasks = (newTasks) => {
     const updated = typeof newTasks === "function" ? newTasks(tasks) : newTasks;
-    setWeekTasks((w) => ({ ...w, [selectedDay]: updated }));
+    setWeekTasks((w) => ({ ...w, [selectedDate]: updated }));
   };
   const setFloatingTasks = (newList) => {
     const updated = typeof newList === "function" ? newList(floatingTasks) : newList;
-    setWeekFloatingTasks((w) => ({ ...w, [selectedDay]: updated }));
+    setWeekFloatingTasks((w) => ({ ...w, [selectedDate]: updated }));
   };
+
+  // Navigation par semaines réelles.
+  const goToToday = () => { const t = todayISO(); setWeekAnchor(t); setSelectedDate(t); };
+  const goPrevWeek = () => setWeekAnchor((a) => addDaysISO(a, -7));
+  const goNextWeek = () => setWeekAnchor((a) => addDaysISO(a, 7));
+  // Sélection d'un jour : aligne aussi la semaine affichée sur ce jour.
+  const selectDate = (dateKey) => { setSelectedDate(dateKey); setWeekAnchor(dateKey); };
 
   // Trial countdown.
   // ⚠️ Phase de test : l'essai de 7 jours et l'abonnement (3,99 €/mois)
@@ -227,7 +240,7 @@ export function FocusProvider({ children }) {
       nextTask = sortedTasks[idx + 1];
     }
   } else {
-    const isToday = selectedDay === todayIndex();
+    const isToday = selectedDate === todayISO();
     const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     if (isToday) {
       currentTask = sortedTasks.find(
@@ -266,7 +279,7 @@ export function FocusProvider({ children }) {
     }
     // Time-based progress only applies to today's view. Future/past days
     // remain at 0% unless explicitly marked completed.
-    if (selectedDay !== todayIndex()) return 0;
+    if (selectedDate !== todayISO()) return 0;
     const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     const start = toMin(task.start);
     const end = toMin(task.end);
@@ -335,15 +348,15 @@ export function FocusProvider({ children }) {
   // Detect end of day → show summary popup.
   useEffect(() => {
     if (!isRunning || tasks.length === 0) return undefined;
-    if (summaryShownRef.current.has(selectedDay)) return undefined;
+    if (summaryShownRef.current.has(selectedDate)) return undefined;
     const allHandled = tasks.every((t) => dayCompletions[t.id]);
     if (allHandled) {
-      summaryShownRef.current.add(selectedDay);
+      summaryShownRef.current.add(selectedDate);
       const id = setTimeout(() => setShowDaySummary(true), 1200);
       return () => clearTimeout(id);
     }
     return undefined;
-  }, [dayCompletions, tasks, isRunning, selectedDay]);
+  }, [dayCompletions, tasks, isRunning, selectedDate]);
 
   // Drag listeners while a drag is active.
   useEffect(() => {
@@ -434,11 +447,11 @@ export function FocusProvider({ children }) {
     // Applique un snapshot dans le state React.
     const applySnapshot = (snap) => {
       if (!snap) return;
-      setWeekTasks(snap.weekTasks && Object.keys(snap.weekTasks).length ? snap.weekTasks : DEFAULT_TASKS);
-      setWeekFloatingTasks(snap.weekFloatingTasks && Object.keys(snap.weekFloatingTasks).length ? snap.weekFloatingTasks : DEFAULT_FLOATING);
-      setCompletions(snap.completions && Object.keys(snap.completions).length ? snap.completions : DEFAULT_COMPLETIONS);
+      setWeekTasks(snap.weekTasks || {});
+      setWeekFloatingTasks(snap.weekFloatingTasks || {});
+      setCompletions(snap.completions || {});
       setFloatingCompletions(snap.floatingCompletions || {});
-      setDayMetrics(snap.dayMetrics && Object.keys(snap.dayMetrics).length ? snap.dayMetrics : DEFAULT_DAY_METRICS);
+      setDayMetrics(snap.dayMetrics || {});
       if (Array.isArray(snap.customTemplates)) setCustomTaskTemplates(snap.customTemplates);
       if (snap.customTheme) setCustomTheme(snap.customTheme);
     };
@@ -453,18 +466,27 @@ export function FocusProvider({ children }) {
     const cloudEmpty = UserData.isSnapshotEmpty(snapshot);
     const localHasData = local && !UserData.isSnapshotEmpty(local);
 
+    // Choix de la source, puis migration v1→v2 (jour de semaine → date ISO).
+    let chosen = null;
+    let pushAfter = false; // re-pousser vers le cloud (récupération / migration)
     if (error && localHasData) {
-      // Cloud injoignable → on restaure le cache local, sans rien écraser.
-      applySnapshot(local);
+      chosen = local;
     } else if (cloudEmpty && localHasData) {
-      // Cloud vide mais cache local rempli = symptôme d'une perte/écrasement.
-      // On restaure le local ET on le re-pousse vers le cloud (récupération).
-      applySnapshot(local);
-      UserData.saveUserData(uid, local).catch(() => {});
+      chosen = local; pushAfter = true;
     } else if (!error) {
-      // Cas nominal : on applique le cloud et on rafraîchit le cache local.
-      applySnapshot(snapshot);
-      UserData.writeLocalSnapshot(uid, snapshot);
+      chosen = snapshot;
+    }
+
+    if (chosen) {
+      const wasLegacy = UserData.isLegacySnapshot(chosen);
+      const migrated = UserData.migrateSnapshot(chosen);
+      applySnapshot(migrated);
+      UserData.writeLocalSnapshot(uid, migrated);
+      // Persiste immédiatement la forme datée si migration effectuée ou
+      // récupération depuis le cache local.
+      if ((wasLegacy || pushAfter) && !error) {
+        UserData.saveUserData(uid, migrated).catch(() => {});
+      }
     }
 
     // À partir d'ici seulement, les sauvegardes sont autorisées.
@@ -654,6 +676,8 @@ export function FocusProvider({ children }) {
     setCompletions(DEFAULT_COMPLETIONS);
     setDayMetrics(DEFAULT_DAY_METRICS);
     setCustomTaskTemplates([]);
+    setSelectedDate(todayISO());
+    setWeekAnchor(todayISO());
   };
 
   // Changement de mot de passe depuis le profil — vérifie l'ancien
@@ -1007,16 +1031,16 @@ export function FocusProvider({ children }) {
   };
 
   const resetDay = () => {
-    setWeekTasks((w) => ({ ...w, [selectedDay]: [] }));
-    setCompletions((c) => ({ ...c, [selectedDay]: {} }));
-    setDayMetrics((prev) => ({ ...prev, [selectedDay]: {} }));
+    setWeekTasks((w) => ({ ...w, [selectedDate]: [] }));
+    setCompletions((c) => ({ ...c, [selectedDate]: {} }));
+    setDayMetrics((prev) => ({ ...prev, [selectedDate]: {} }));
     setIsRunning(false);
     setPausedAt(null);
     setDemoMode(false);
     setDemoElapsed(0);
     lastEndedRef.current.clear();
     notifiedRef.current.clear();
-    summaryShownRef.current.delete(selectedDay);
+    summaryShownRef.current.delete(selectedDate);
     popupOpenedAtRef.current = null;
     popupTriggerKindRef.current = null;
     setEndTaskPopup(null);
@@ -1094,14 +1118,14 @@ export function FocusProvider({ children }) {
     notifiedRef.current.clear();
     setDayMetrics((prev) => ({
       ...prev,
-      [selectedDay]: {
+      [selectedDate]: {
         pauseMin: 0,
         delayMin: 0,
         originalTasks: tasks.map((t) => ({ id: t.id, start: t.start, end: t.end })),
         startedAt: Date.now(),
       },
     }));
-    summaryShownRef.current.delete(selectedDay);
+    summaryShownRef.current.delete(selectedDate);
   };
 
   const confirmPause = () => {
@@ -1138,9 +1162,9 @@ export function FocusProvider({ children }) {
           updated.forEach((t) => { if (toMin(t.end) > nowMin) lastEndedRef.current.delete(t.id); });
           setDayMetrics((prev) => ({
             ...prev,
-            [selectedDay]: {
-              ...(prev[selectedDay] || {}),
-              pauseMin: ((prev[selectedDay] || {}).pauseMin || 0) + pauseMin,
+            [selectedDate]: {
+              ...(prev[selectedDate] || {}),
+              pauseMin: ((prev[selectedDate] || {}).pauseMin || 0) + pauseMin,
             },
           }));
         }
@@ -1270,7 +1294,10 @@ export function FocusProvider({ children }) {
   };
 
   const markTaskDone = (taskId) => {
-    setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [taskId]: "done" } });
+    setCompletions((prev) => ({
+      ...prev,
+      [selectedDate]: { ...(prev[selectedDate] || {}), [taskId]: "done" },
+    }));
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
       setValidationBurst({ color: task.color, ts: Date.now() });
@@ -1284,12 +1311,12 @@ export function FocusProvider({ children }) {
   };
 
   // ── Tâches sans horaire : terminer / dé-terminer ────────────────────────
-  const dayFloatingCompletions = floatingCompletions[selectedDay] || {};
+  const dayFloatingCompletions = floatingCompletions[selectedDate] || {};
   const markFloatingDone = (taskId) => {
     const ftask = floatingTasks.find((t) => t.id === taskId);
     setFloatingCompletions((prev) => ({
       ...prev,
-      [selectedDay]: { ...(prev[selectedDay] || {}), [taskId]: "done" },
+      [selectedDate]: { ...(prev[selectedDate] || {}), [taskId]: "done" },
     }));
     if (ftask) {
       setValidationBurst({ color: ftask.color || "#E2B872", ts: Date.now() });
@@ -1299,9 +1326,9 @@ export function FocusProvider({ children }) {
   };
   const unmarkFloatingDone = (taskId) => {
     setFloatingCompletions((prev) => {
-      const next = { ...(prev[selectedDay] || {}) };
+      const next = { ...(prev[selectedDate] || {}) };
       delete next[taskId];
-      return { ...prev, [selectedDay]: next };
+      return { ...prev, [selectedDate]: next };
     });
   };
 
@@ -1314,7 +1341,10 @@ export function FocusProvider({ children }) {
   const closePlanningDetail = () => setPlanningDetail(null);
 
   const markTaskSkipped = (taskId) => {
-    setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [taskId]: "skipped" } });
+    setCompletions((prev) => ({
+      ...prev,
+      [selectedDate]: { ...(prev[selectedDate] || {}), [taskId]: "skipped" },
+    }));
     shiftUpcomingByResponseDelay(taskId);
     pullUpcomingForEarlyFinish(taskId);
     setEndTaskPopup(null);
@@ -1370,7 +1400,10 @@ export function FocusProvider({ children }) {
       return { ...t, start: fromMin(toMin(t.start) - shift), end: fromMin(toMin(t.end) - shift) };
     });
     setTasks(updated);
-    setCompletions({ ...completions, [selectedDay]: { ...dayCompletions, [task.id]: "done" } });
+    setCompletions((prev) => ({
+      ...prev,
+      [selectedDate]: { ...(prev[selectedDate] || {}), [task.id]: "done" },
+    }));
     setValidationBurst({ color: task.color, ts: Date.now() });
     setTimeout(() => setValidationBurst(null), 1800);
     lastEndedRef.current.add(task.id);
@@ -1509,18 +1542,18 @@ export function FocusProvider({ children }) {
   // ────────────────────────────────────────────────────────────────────────
   // Goals / stats
   // ────────────────────────────────────────────────────────────────────────
-  const computeDayGoal = (dayIdx) => {
-    const dayT = weekTasks[dayIdx] || [];
+  const computeDayGoal = (dateKey) => {
+    const dayT = weekTasks[dateKey] || [];
     if (dayT.length === 0) return { done: 0, total: 0, percent: 0 };
-    const dayComp = completions[dayIdx] || {};
+    const dayComp = completions[dateKey] || {};
     const done = dayT.filter((t) => dayComp[t.id] === "done").length;
     return { done, total: dayT.length, percent: Math.round((done / dayT.length) * 100) };
   };
-  const dailyGoal = computeDayGoal(selectedDay);
+  const dailyGoal = computeDayGoal(selectedDate);
   const computeWeekGoal = () => {
     let totalDone = 0; let totalCount = 0;
-    activeDayThemes.forEach((_, idx) => {
-      const g = computeDayGoal(idx);
+    weekDates.forEach((dateKey) => {
+      const g = computeDayGoal(dateKey);
       totalDone += g.done;
       totalCount += g.total;
     });
@@ -1532,20 +1565,23 @@ export function FocusProvider({ children }) {
   const weeklyGoal = computeWeekGoal();
 
   const computeStats = () => {
-    const stats = activeDayThemes.map((theme, idx) => {
-      const dayT = weekTasks[idx] || [];
+    // Statistiques limitées à la semaine affichée (weekDates), thème par jour.
+    const stats = weekDates.map((dateKey, idx) => {
+      const theme = activeDayThemes[idx];
+      const dayT = weekTasks[dateKey] || [];
       const totalMinutes = dayT.reduce((s, t) => s + (toMin(t.end) - toMin(t.start)), 0);
-      const goal = computeDayGoal(idx);
+      const goal = computeDayGoal(dateKey);
       return { ...theme, totalMinutes, taskCount: dayT.length, completion: goal.percent, idx };
     });
+    const weekTaskLists = weekDates.map((dateKey) => weekTasks[dateKey] || []);
     const categoryTotals = {};
-    Object.values(weekTasks).flat().forEach((t) => {
+    weekTaskLists.flat().forEach((t) => {
       const dur = toMin(t.end) - toMin(t.start);
       const key = t.category ? TASK_CATEGORIES.find((c) => c.id === t.category)?.name || t.name : t.name;
       categoryTotals[key] = (categoryTotals[key] || 0) + dur;
     });
     const topCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const totalWeekTasks = Object.values(weekTasks).flat().length;
+    const totalWeekTasks = weekTaskLists.flat().length;
     const totalWeekMinutes = stats.reduce((s, d) => s + d.totalMinutes, 0);
     const dayWithTasks = stats.filter((s) => s.taskCount > 0);
     const avgCompletion = dayWithTasks.length > 0
@@ -1624,7 +1660,8 @@ export function FocusProvider({ children }) {
     activeDayThemes, dayTheme,
 
     // Tasks
-    selectedDay, setSelectedDay,
+    selectedDate, setSelectedDate, selectDate, selectedWeekday,
+    weekDates, weekAnchor, goToToday, goPrevWeek, goNextWeek,
     weekTasks, weekFloatingTasks,
     tasks, sortedTasks, floatingTasks, dayCompletions,
     completions, setCompletions,

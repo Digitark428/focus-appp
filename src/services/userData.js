@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
+import { weekDatesFrom } from "../utils/time";
 
 // ─────────────────────────────────────────────────────────────────────────
 // user_data service — snapshot JSONB du state applicatif.
@@ -126,3 +127,55 @@ export async function saveUserData(userId, snapshot) {
 }
 
 export { SHAPE as USER_DATA_SHAPE };
+
+// ─────────────────────────────────────────────────────────────────────────
+// MIGRATION v1 → v2 : passage du modèle indexé par jour de semaine (0–6) au
+// modèle calendaire daté ("YYYY-MM-DD").
+//
+// Les anciennes données n'avaient AUCUNE notion de semaine réelle : "mercredi"
+// était partagé entre toutes les semaines (d'où les tâches qui "réapparaissent").
+// La seule interprétation cohérente : rattacher chaque jour de semaine N à la
+// date réelle de ce jour dans la SEMAINE COURANTE au moment de la migration.
+// Le plan existant de l'utilisateur est ainsi préservé pour la semaine en cours ;
+// les semaines suivantes démarrent proprement vides.
+//
+// Idempotent : ne transforme que les clés numériques 0–6. Les clés déjà datées
+// (contenant "-") sont laissées intactes → ré-exécution sans effet.
+// ─────────────────────────────────────────────────────────────────────────
+const isLegacyKeyed = (obj) =>
+  !!obj && typeof obj === "object" &&
+  Object.keys(obj).length > 0 &&
+  Object.keys(obj).every((k) => /^[0-6]$/.test(k));
+
+export function isLegacySnapshot(s) {
+  if (!s) return false;
+  return (
+    isLegacyKeyed(s.weekTasks) ||
+    isLegacyKeyed(s.weekFloatingTasks) ||
+    isLegacyKeyed(s.completions) ||
+    isLegacyKeyed(s.floatingCompletions) ||
+    isLegacyKeyed(s.dayMetrics)
+  );
+}
+
+export function migrateSnapshot(snapshot) {
+  if (!isLegacySnapshot(snapshot)) return snapshot;
+  const dates = weekDatesFrom(); // Lun…Dim de la semaine courante
+  const remap = (obj) => {
+    if (!isLegacyKeyed(obj)) return obj || {};
+    const out = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (idx >= 0 && idx <= 6) out[dates[idx]] = v;
+    });
+    return out;
+  };
+  return {
+    ...snapshot,
+    weekTasks:           remap(snapshot.weekTasks),
+    weekFloatingTasks:   remap(snapshot.weekFloatingTasks),
+    completions:         remap(snapshot.completions),
+    floatingCompletions: remap(snapshot.floatingCompletions),
+    dayMetrics:          remap(snapshot.dayMetrics),
+  };
+}

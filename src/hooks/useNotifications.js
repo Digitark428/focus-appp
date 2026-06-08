@@ -4,7 +4,7 @@ import {
   notificationsSupported, notificationPermission,
   scheduleNotifications, cancelScheduledNotifications,
 } from "../services/notifications";
-import { toMin } from "../utils/time";
+import { toMin, todayISO } from "../utils/time";
 
 const MORNING_QUOTES = [
   "Une nouvelle journée commence — prends-en le contrôle.",
@@ -123,7 +123,7 @@ function buildSchedule({ tasks, completions, todayDate, userFirstName }) {
 
 export function useNotifications() {
   const {
-    notificationsEnabled, tasks, dayCompletions, user, selectedDay,
+    notificationsEnabled, tasks, dayCompletions, user, selectedDate,
   } = useFocus();
   const lastScheduledRef = useRef("");
 
@@ -138,10 +138,9 @@ export function useNotifications() {
     // Only schedule for today's day view; viewing a future/past day doesn't
     // re-arm notifications for that day (they fire only on their real date).
     const today = new Date();
-    const todayWeekIdx = (today.getDay() + 6) % 7; // 0 = Monday
-    if (selectedDay !== todayWeekIdx) {
+    if (selectedDate !== todayISO()) {
       // Don't cancel: notifications for "today" were last scheduled when
-      // selectedDay was today. We just skip rescheduling from a different view.
+      // selectedDate was today. We just skip rescheduling from a different view.
       return;
     }
 
@@ -156,7 +155,7 @@ export function useNotifications() {
     if (signature === lastScheduledRef.current) return;
     lastScheduledRef.current = signature;
     scheduleNotifications(items);
-  }, [notificationsEnabled, tasks, dayCompletions, user, selectedDay]);
+  }, [notificationsEnabled, tasks, dayCompletions, user, selectedDate]);
 
   // Periodic re-sync: every 5 min, refresh schedule (in case SW was restarted).
   useEffect(() => {

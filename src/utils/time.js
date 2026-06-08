@@ -5,6 +5,53 @@ export const todayIndex = () => {
   return d === 0 ? 6 : d - 1;
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// Modèle calendaire daté (clé "YYYY-MM-DD" en heure locale, sans décalage UTC).
+// ─────────────────────────────────────────────────────────────────────────
+
+// Date locale -> "YYYY-MM-DD".
+export const isoDate = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+export const todayISO = () => isoDate(new Date());
+
+// Index jour de semaine (Lundi=0 … Dimanche=6) à partir d'une date ISO.
+export const weekdayIndex = (iso) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const wd = new Date(y, m - 1, d).getDay(); // 0=Dimanche
+  return wd === 0 ? 6 : wd - 1;
+};
+
+// Décale une date ISO de n jours.
+export const addDaysISO = (iso, n) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return isoDate(new Date(y, m - 1, d + n));
+};
+
+// Lundi (ISO) de la semaine contenant la date donnée.
+export const startOfWeekISO = (iso = todayISO()) => addDaysISO(iso, -weekdayIndex(iso));
+
+// Tableau des 7 dates ISO (Lun…Dim) de la semaine contenant `anchorISO`.
+export const weekDatesFrom = (anchorISO = todayISO()) => {
+  const monday = startOfWeekISO(anchorISO);
+  return Array.from({ length: 7 }, (_, i) => addDaysISO(monday, i));
+};
+
+// Libellé court "4 juin".
+export const dayMonthLabel = (iso) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+};
+
+// Libellé de plage de semaine "2 – 8 juin".
+export const weekRangeLabel = (anchorISO = todayISO()) => {
+  const dates = weekDatesFrom(anchorISO);
+  return `${dayMonthLabel(dates[0])} – ${dayMonthLabel(dates[6])}`;
+};
+
 // "HH:MM" -> total minutes since midnight.
 export const toMin = (hm) => {
   const [h, m] = hm.split(":").map(Number);
