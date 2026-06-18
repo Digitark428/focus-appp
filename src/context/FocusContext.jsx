@@ -439,7 +439,9 @@ export function FocusProvider({ children }) {
     // (compense un éventuel trigger handle_new_user absent / non exécuté).
     UserData.ensureUserDataRow(uid).catch(() => {});
 
-    const { profile } = await Profiles.fetchProfile(uid);
+    let profile = null;
+    try { ({ profile } = await Profiles.fetchProfile(uid)); }
+    catch { profile = null; }
     const sessionUser = {
       id: uid,
       email: session.user.email,
@@ -526,10 +528,19 @@ export function FocusProvider({ children }) {
     if (!hasSupabase) { setAuthReady(true); return; }
     let unsub = () => {};
     (async () => {
-      const { session } = await Auth.getSession();
-      await hydrateFromSession(session);
-      setAuthReady(true);
-      unsub = Auth.onAuthChange((s) => { hydrateFromSession(s); });
+      try {
+        const { session } = await Auth.getSession();
+        await hydrateFromSession(session);
+      } catch (e) {
+        // Hydratation au boot impossible (réseau / Supabase) : on n'empêche
+        // JAMAIS l'app de démarrer. Le cache local sera utilisé si présent,
+        // sinon l'utilisateur arrive sur l'écran de connexion.
+        // eslint-disable-next-line no-console
+        console.error("[tempo] hydratation au boot échouée", e);
+      } finally {
+        setAuthReady(true);
+        unsub = Auth.onAuthChange((s) => { hydrateFromSession(s).catch(() => {}); });
+      }
     })();
     return () => unsub();
     // eslint-disable-next-line react-hooks/exhaustive-deps

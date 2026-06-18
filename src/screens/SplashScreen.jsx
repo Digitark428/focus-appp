@@ -7,14 +7,26 @@ import { TEMPO, TEMPO_GRADIENTS } from "../utils/tempoTheme";
 //  Affiche le logo Tempo, le wordmark et le tagline avec une
 //  animation premium d'entrée, puis disparaît automatiquement.
 // ============================================================
-export default function SplashScreen({ onDone, duration = 2200 }) {
+export default function SplashScreen({ onDone, ready = null, duration = 2200 }) {
   const [fadingOut, setFadingOut] = useState(false);
 
+  // Mode autonome (ready === null) : ancien comportement, timer fixe.
   useEffect(() => {
+    if (ready !== null) return undefined;
     const t1 = setTimeout(() => setFadingOut(true), duration - 500);
     const t2 = setTimeout(() => onDone?.(), duration);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [duration, onDone]);
+  }, [duration, onDone, ready]);
+
+  // Mode contrôlé : on RESTE affiché (opacité 1) tant que `ready` est faux,
+  // puis on enchaîne le fondu de sortie + onDone. Évite tout écran bleu vide
+  // si l'hydratation Supabase prend plus de temps que l'animation.
+  useEffect(() => {
+    if (ready !== true) return undefined;
+    setFadingOut(true);
+    const t = setTimeout(() => onDone?.(), 500);
+    return () => clearTimeout(t);
+  }, [ready, onDone]);
 
   return (
     <div

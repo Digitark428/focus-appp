@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FocusProvider, useFocus } from "./context/FocusContext";
 import { useAmbientAudio } from "./hooks/useAmbientAudio";
 import { useCustomAudio } from "./hooks/useCustomAudio";
@@ -35,12 +35,9 @@ function GlobalAudioController() {
 // ───────────────────────────────────────────────────────────────
 function Router() {
   const {
-    user, authReady, trialExpired, showSubscription, focusMode, activeMeditation,
+    user, trialExpired, showSubscription, focusMode, activeMeditation,
     showStats, showPlanning, showProfile, showCustomization,
   } = useFocus();
-
-  // Tant que la session n'est pas hydratée, on garde le splash visuel.
-  if (!authReady) return <SplashScreen onDone={() => {}} />;
 
   if (!user) return <SignupScreen />;
   if (trialExpired || showSubscription) return <SubscriptionScreen />;
@@ -61,19 +58,43 @@ function BottomNavGate() {
   return <BottomNav />;
 }
 
-export default function FocusApp() {
-  const [splashDone, setSplashDone] = useState(false);
+// Porte de démarrage : un SEUL splash. L'hydratation Supabase tourne EN
+// PARALLÈLE de l'animation (FocusProvider monté immédiatement). On quitte le
+// splash uniquement quand l'animation minimale est passée ET que la session
+// est hydratée (authReady) → pas de double splash, pas d'écran vide.
+function BootGate() {
+  const { authReady } = useFocus();
+  const [minElapsed, setMinElapsed] = useState(false);
+  const [splashGone, setSplashGone] = useState(false);
 
-  if (!splashDone) {
-    return <SplashScreen onDone={() => setSplashDone(true)} />;
+  useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), 2200);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!splashGone) {
+    return (
+      <SplashScreen
+        ready={authReady && minElapsed}
+        onDone={() => setSplashGone(true)}
+      />
+    );
   }
 
+  return (
+    <>
+      <Router />
+      <BottomNavGate />
+    </>
+  );
+}
+
+export default function FocusApp() {
   return (
     <ErrorBoundary>
       <FocusProvider>
         <GlobalAudioController />
-        <Router />
-        <BottomNavGate />
+        <BootGate />
       </FocusProvider>
     </ErrorBoundary>
   );
