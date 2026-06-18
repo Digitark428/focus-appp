@@ -275,8 +275,8 @@ export default function SignupScreen() {
           )}
 
           <button
-            onClick={() => {
-              if (handleForgotPassword()) setForgotSent(true);
+            onClick={async () => {
+              if (await handleForgotPassword()) setForgotSent(true);
             }}
             disabled={!forgotForm.email}
             className="w-full mt-4 py-3.5 rounded-xl text-sm font-medium transition active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"

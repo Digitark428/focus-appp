@@ -635,11 +635,12 @@ export function FocusProvider({ children }) {
         UserData.flushSaveBeacon(user.id, accessTokenRef.current, snapshot);
       }
     };
+    const onVisibility = () => { if (document.visibilityState === "hidden") flush(); };
     window.addEventListener("pagehide", flush);
-    window.addEventListener("visibilitychange", flush);
+    window.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("pagehide", flush);
-      window.removeEventListener("visibilitychange", flush);
+      window.removeEventListener("visibilitychange", onVisibility);
     };
   }, [
     user?.id, weekTasks, weekFloatingTasks, completions, floatingCompletions, dayMetrics,
