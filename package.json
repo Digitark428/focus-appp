@@ -1,24 +1,11 @@
 {
-  "name": "tempo",
+  "name": "le-petit-booth-site",
   "private": true,
-  "version": "0.2.0",
-  "type": "module",
+  "description": "Assemble le site public + l'administration compilée dans un seul dossier de sortie (dist-site) pour un déploiement Vercel unique.",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "cd admin && npm install && npm run build && cd .. && rm -rf dist-site && mkdir -p dist-site/admin && cp index.html avis.html robots.txt sitemap.xml dist-site/ && cp -r admin/dist/* dist-site/admin/ && ([ -d assets ] && cp -r assets dist-site/ || true)"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.0",
-    "lucide-react": "^0.383.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.4",
-    "vite": "^5.3.1"
+    "stripe": "^16.12.0"
   }
 }
